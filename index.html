@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dennis Dyall</title>
+<meta name="description" content="Dennis Dyall — developer, artist manager, and creative practitioner based in Gothenburg, Sweden.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --border: #E8E6E1;
+    --border-hover: #C8C4BC;
+    --text: #1A1A1A;
+    --text-secondary: #5C5C5C;
+    --text-muted: #8C8C8C;
+    --accent: #B8894A;
+    --accent-bg: rgba(184, 137, 74, 0.06);
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+    --radius: 6px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .container {
+    max-width: 640px;
+    width: 100%;
+  }
+
+  /* ── HERO IMAGE ── */
+  .hero-img {
+    width: 100%;
+    height: 320px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeIn 0.6s 0.05s forwards;
+  }
+
+  .hero-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 50%;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeIn 0.6s 0.1s forwards;
+  }
+
+  .name {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+  }
+
+  .tagline {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    max-width: 480px;
+  }
+
+  .location {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.65rem;
+  }
+
+  .location::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  /* ── PATHS ── */
+  .paths {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeIn 0.6s 0.25s forwards;
+  }
+
+  .path {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+    cursor: pointer;
+  }
+
+  .path:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transform: translateY(-1px);
+  }
+
+  .path-label {
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .path-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+
+  .path-arrow {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    transition: transform 0.25s, color 0.25s;
+  }
+
+  .path:hover .path-arrow {
+    transform: translateX(3px);
+    color: var(--accent);
+  }
+
+  /* ── EXPANDABLE SECTIONS ── */
+  .section {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    animation: slideDown 0.3s ease;
+  }
+
+  .section.active { display: block; }
+
+  .section-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    transition: color 0.2s;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  .section-back:hover { color: var(--accent); }
+
+  .section h2 {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+  }
+
+  .section p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .section p:last-of-type { margin-bottom: 0; }
+
+  .section-links {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .section-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .section-link:hover { opacity: 0.75; }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 1rem;
+  }
+
+  .pill {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    padding: 0.3rem 0.65rem;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-radius: 3px;
+  }
+
+  /* ── LINKS BAR ── */
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    opacity: 0;
+    animation: fadeIn 0.6s 0.4s forwards;
+  }
+
+  .links a {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .links a:hover { color: var(--accent); }
+
+  .links .sep {
+    color: var(--border);
+    user-select: none;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    body { padding: 2rem 1rem; }
+    .path { padding: 1rem 1.15rem; }
+    .section { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HERO IMAGE -->
+  <div class="hero-img">
+    <img id="hero" alt="Dennis Dyall">
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1 class="name">Dennis Dyall</h1>
+    <p class="tagline">
+      Developer, artist manager, and creative practitioner. 
+      I build things, represent people, and hold space.
+    </p>
+    <span class="location">Gothenburg, Sweden</span>
+  </div>
+
+  <!-- PATH CARDS -->
+  <div class="paths" id="paths">
+    <a class="path" data-section="creative">
+      <div>
+        <div class="path-label">Artist management & performance</div>
+        <div class="path-desc">Representing performing artists, festival booking, creative direction, DJ & fire arts.</div>
+      </div>
+      <span class="path-arrow">&rarr;</span>
+    </a>
+    <a class="path" data-section="dev">
+      <div>
+        <div class="path-label">Software development</div>
+        <div class="path-desc">Full-stack developer with 10+ years in C#, TypeScript, and cloud infrastructure.</div>
+      </div>
+      <span class="path-arrow">&rarr;</span>
+    </a>
+    <a class="path" data-section="coaching">
+      <div>
+        <div class="path-label">Coaching & facilitation</div>
+        <div class="path-desc">Zen coaching, meditation facilitation, retreats, and inner work.</div>
+      </div>
+      <span class="path-arrow">&rarr;</span>
+    </a>
+  </div>
+
+  <!-- SECTION: CREATIVE -->
+  <div class="section" id="creative">
+    <button class="section-back" onclick="closeSection()">&larr; Back</button>
+    <h2>Artist management & performance</h2>
+    <p>
+      I manage and represent performing artists who operate between tradition 
+      and contemporary expression. My current roster includes the Hazayana 
+      Collective (Tribal Fusion &amp; Sacred Bass, France), Naomi Runa
+      (Progressive Soul &amp; Conscious Hip-Hop, Stockholm), Andreas
+      L&aring;ng (Visblues &amp; Swedish roots, Stockholm), Sophie
+      Von Matern (Medicine Music &amp; Ethno-Soul, Sweden), and Felicia
+      Falck (Nordic Folk &amp; Vispop, Bohusl&auml;n).
+    </p>
+    <p>
+      Before management, I spent a decade on the other side of the stage &mdash; DJing 
+      electronic and psychedelic music as Moonkin, performing fire shows, 
+      and founding Stockholm Flow, Scandinavia's largest flow arts community. 
+      I understand what artists need because I've needed it myself.
+    </p>
+    <div class="section-links">
+      <a href="https://echological.fm/hazaaheli/en/" class="section-link" target="_blank">Hazayana Collective &#8599;</a>
+      <a href="https://echological.fm/naomiruna/" class="section-link" target="_blank">Naomi Runa &#8599;</a>
+      <a href="https://echological.fm/andreaslang/" class="section-link" target="_blank">Andreas L&aring;ng &#8599;</a>
+      <a href="https://echological.fm/sophie/" class="section-link" target="_blank">Sophie Von Matern &#8599;</a>
+      <a href="https://feliciafalck.com" class="section-link" target="_blank">Felicia Falck &#8599;</a>
+      <a href="https://echological.fm" class="section-link" target="_blank">Echological.fm &#8599;</a>
+    </div>
+    <div class="pill-row">
+      <span class="pill">Festival booking</span>
+      <span class="pill">Artist roster</span>
+      <span class="pill">EPK & narrative</span>
+      <span class="pill">Creative direction</span>
+      <span class="pill">DJ (Moonkin)</span>
+      <span class="pill">Fire performance</span>
+      <span class="pill">Flow arts</span>
+    </div>
+  </div>
+
+  <!-- SECTION: DEV -->
+  <div class="section" id="dev">
+    <button class="section-back" onclick="closeSection()">&larr; Back</button>
+    <h2>Software development</h2>
+    <p>
+      Senior Software Engineer with 10+ years building scalable fullstack systems
+      and microservice architectures. Currently at Yubico, shipping cross-platform
+      authentication SDKs to enterprise customers globally. Previously at Sveriges
+      Radio, leading a team delivering platform features for 5 million weekly listeners.
+    </p>
+    <p id="dev-long" style="display:none">
+      At Yubico, I lead development of the .NET SDK (186+ PRs, 6 major releases in 2025),
+      implemented CI/CD security hardening across 68 GitHub Actions workflows, and built
+      an MCP server enabling AI assistants to interface with YubiKey hardware. At Sveriges
+      Radio, I designed microservices powering content delivery and live streaming, built
+      REST and gRPC interfaces for high-throughput audio delivery, and drove CI/CD adoption
+      and infrastructure-as-code practices.
+    </p>
+    <button class="section-back" id="dev-toggle" onclick="toggleDev()" style="margin-bottom:0; margin-top:0.75rem">Read more &darr;</button>
+    <div class="section-links">
+      <a href="https://github.com/DennisDyallo" class="section-link" target="_blank">GitHub &#8599;</a>
+      <a href="https://www.linkedin.com/in/dennis-dyallo" class="section-link" target="_blank">LinkedIn &#8599;</a>
+    </div>
+    <div class="pill-row">
+      <span class="pill">C# / .NET</span>
+      <span class="pill">TypeScript</span>
+      <span class="pill">Python</span>
+      <span class="pill">React</span>
+      <span class="pill">gRPC</span>
+      <span class="pill">Kubernetes (CKAD)</span>
+      <span class="pill">Docker</span>
+      <span class="pill">GitHub Actions</span>
+      <span class="pill">Microservices</span>
+    </div>
+  </div>
+
+  <!-- SECTION: COACHING -->
+  <div class="section" id="coaching">
+    <button class="section-back" onclick="closeSection()">&larr; Back</button>
+    <h2>Coaching & facilitation</h2>
+    <p>
+      Certified Zen Coach with a practice rooted in Vipassana meditation, yoga, 
+      and contemplative traditions. I work with individuals and groups navigating 
+      change, creative blocks, or a desire for deeper self-understanding.
+    </p>
+    <p>
+      My approach is grounded and direct &mdash; less guru, more honest mirror. I also 
+      facilitate men's circles, inner work retreats, and movement-based workshops 
+      that bridge physical practice with personal inquiry.
+    </p>
+    <div class="pill-row">
+      <span class="pill">Zen coaching</span>
+      <span class="pill">Vipassana</span>
+      <span class="pill">Meditation</span>
+      <span class="pill">Retreats</span>
+      <span class="pill">Men's circles</span>
+    </div>
+  </div>
+
+  <!-- FOOTER LINKS -->
+  <div class="links">
+    <a href="mailto:dennis@dyallo.se">Email</a>
+    <span class="sep">&middot;</span>
+    <a href="https://www.linkedin.com/in/dennis-dyallo" target="_blank">LinkedIn</a>
+    <span class="sep">&middot;</span>
+    <a href="https://github.com/dennisdyallo" target="_blank">GitHub</a>
+    <span class="sep">&middot;</span>
+    <a href="https://www.instagram.com/ddyallo" target="_blank">Instagram</a>
+    <span class="sep">&middot;</span>
+    <a href="https://www.facebook.com/ddyallo" target="_blank">Facebook</a>
+    <span class="sep">&middot;</span>
+    <a href="https://echological.fm" target="_blank">Echological.fm</a>
+  </div>
+
+</div>
+
+<script>
+  const images = [
+    { src: 'image00001.jpeg', pos: 'center 25%' },
+    { src: 'image00002.jpeg', pos: 'center 35%' },
+    { src: 'image00470.jpeg', pos: 'center 50%' },
+    { src: 'image00492.jpeg', pos: 'center 40%' },
+  ];
+  const pick = images[Math.floor(Math.random() * images.length)];
+  const heroImg = document.getElementById('hero');
+  heroImg.src = pick.src;
+  heroImg.style.objectPosition = pick.pos;
+
+  const paths = document.getElementById('paths');
+  const linksBar = document.querySelector('.links');
+
+  document.querySelectorAll('.path').forEach(card => {
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = card.dataset.section;
+      paths.style.display = 'none';
+      linksBar.style.display = 'none';
+      document.getElementById(id).classList.add('active');
+    });
+  });
+
+  function toggleDev() {
+    const el = document.getElementById('dev-long');
+    const btn = document.getElementById('dev-toggle');
+    const visible = el.style.display !== 'none';
+    el.style.display = visible ? 'none' : 'block';
+    btn.innerHTML = visible ? 'Read more &darr;' : 'Less &uarr;';
+  }
+
+  function closeSection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    paths.style.display = 'flex';
+    linksBar.style.display = 'flex';
+  }
+</script>
+</body>
+</html>
