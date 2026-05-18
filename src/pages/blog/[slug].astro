@@ -40,42 +40,44 @@ const articleJsonLd = {
   canonicalUrl={entry.data.canonicalUrl}
   jsonLd={articleJsonLd}
 >
-  <article class="post">
-    <header class="post-header">
-      <a href="/blog" class="back-link">← All Posts</a>
-      <time datetime={entry.data.pubDate.toISOString()}>
+  <main>
+    <article class="post">
+      <header class="post-header">
+        <a href="/blog" class="back-link">← All Posts</a>
+        <time datetime={entry.data.pubDate.toISOString()}>
+          {
+            entry.data.pubDate.toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          }
+        </time>
+        <h1>{entry.data.title}</h1>
         {
-          entry.data.pubDate.toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })
+          entry.data.tags.length > 0 && (
+            <div class="tags">
+              {entry.data.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+          )
         }
-      </time>
-      <h1>{entry.data.title}</h1>
-      {
-        entry.data.tags.length > 0 && (
-          <div class="tags">
-            {entry.data.tags.map((tag) => (
-              <span class="tag">{tag}</span>
-            ))}
-          </div>
-        )
-      }
-    </header>
+      </header>
 
-    <div class="post-content">
-      <Content />
-    </div>
-
-    <footer class="post-footer">
-      <div class="subscribe-cta">
-        <h3>Get new essays via email</h3>
-        <p>No spam, just signal.</p>
-        <SubscribeForm />
+      <div class="post-content">
+        <Content />
       </div>
-    </footer>
-  </article>
+
+      <footer class="post-footer">
+        <div class="subscribe-cta">
+          <h2>Get new essays via email</h2>
+          <p>No spam, just signal.</p>
+          <SubscribeForm />
+        </div>
+      </footer>
+    </article>
+  </main>
 
   <style>
     .post {
@@ -227,7 +229,7 @@ const articleJsonLd = {
       border-radius: var(--radius-md);
     }
 
-    .subscribe-cta h3 {
+    .subscribe-cta h2 {
       font-size: 1.5rem;
       margin-bottom: var(--space-sm);
     }

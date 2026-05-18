@@ -1,0 +1,291 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'Library';
+const pageDescription = 'Books and influences that shaped my thinking across sovereignty, systems, inner work, and practice.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <main class="container">
+    <header class="page-header">
+      <h1>Library</h1>
+      <p class="intro">
+        Books and thinkers that shaped my practice across the four registers. This is not a reading list — these are the texts I return to.
+      </p>
+      <p class="last-updated">Last updated: May 2026</p>
+    </header>
+
+    <div class="library-content">
+      <!-- Currently Reading -->
+      <section class="reading-section currently-reading">
+        <h2>Currently Reading</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3><!-- TODO: Dennis to fill --></h3>
+            <p class="author"><!-- TODO: Dennis to fill --></p>
+            <p class="takeaway"><!-- TODO: Dennis to fill --></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Engineering -->
+      <section class="reading-section">
+        <h2>Engineering</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3>The Pragmatic Programmer</h3>
+            <p class="author">Andrew Hunt & David Thomas</p>
+            <p class="takeaway">Craft over shortcuts. Systems thinking begins at the code level.</p>
+          </div>
+          <div class="book">
+            <h3>Designing Data-Intensive Applications</h3>
+            <p class="author">Martin Kleppmann</p>
+            <p class="takeaway">Distributed systems require designing for failure, not just success.</p>
+          </div>
+          <div class="book">
+            <h3>The Mythical Man-Month</h3>
+            <p class="author">Frederick P. Brooks Jr.</p>
+            <p class="takeaway">Adding people to a late project makes it later. Complexity compounds non-linearly.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sovereignty & Economics -->
+      <section class="reading-section">
+        <h2>Sovereignty & Economics</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3>The Bitcoin Standard</h3>
+            <p class="author">Saifedean Ammous</p>
+            <p class="takeaway">Sound money is the foundation of individual sovereignty. Time preference shapes civilization.</p>
+          </div>
+          <div class="book">
+            <h3>Principles</h3>
+            <p class="author">Ray Dalio</p>
+            <p class="takeaway">Radical truth and radical transparency. Systems for decision-making compound over decades.</p>
+          </div>
+          <div class="book">
+            <h3>The Fiat Standard</h3>
+            <p class="author">Saifedean Ammous</p>
+            <p class="takeaway">Fiat money distorts time preference and concentrates power. Sovereignty requires exit.</p>
+          </div>
+          <div class="book">
+            <h3>The Sovereign Individual</h3>
+            <p class="author">James Dale Davidson & William Rees-Mogg</p>
+            <p class="takeaway">Technology erodes nation-state power. The individual becomes the unit of sovereignty.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inner Work -->
+      <section class="reading-section">
+        <h2>Inner Work</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3>12 Rules for Life</h3>
+            <p class="author">Jordan B. Peterson</p>
+            <p class="takeaway">Responsibility precedes meaning. Stand up straight with your shoulders back.</p>
+          </div>
+          <div class="book">
+            <h3>Waking Up</h3>
+            <p class="author">Sam Harris</p>
+            <p class="takeaway">Consciousness can be explored scientifically. Meditation is a technology, not a belief system.</p>
+          </div>
+          <div class="book">
+            <h3>Nonviolent Communication</h3>
+            <p class="author">Marshall B. Rosenberg</p>
+            <p class="takeaway">Feelings are data, needs are universal. Requests replace demands.</p>
+          </div>
+          <div class="book">
+            <h3>The Way of Zen</h3>
+            <p class="author">Alan Watts</p>
+            <p class="takeaway">The menu is not the meal. Direct experience transcends conceptual understanding.</p>
+          </div>
+          <div class="book">
+            <h3>Psilocybin Mushrooms of the World</h3>
+            <p class="author">Paul Stamets</p>
+            <p class="takeaway">Fungi are nature's recyclers. Consciousness exploration requires botanical precision.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Music & Culture -->
+      <section class="reading-section">
+        <h2>Music & Culture</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3>Food of the Gods</h3>
+            <p class="author">Terence McKenna</p>
+            <p class="takeaway">Psychedelics shaped human consciousness evolution. Culture is downstream of neurochemistry.</p>
+          </div>
+          <div class="book">
+            <h3>The Artist's Way</h3>
+            <p class="author">Julia Cameron</p>
+            <p class="takeaway">Creativity is a spiritual practice. Morning pages unblock the channel.</p>
+          </div>
+          <div class="book">
+            <h3>This Is Your Brain on Music</h3>
+            <p class="author">Daniel J. Levitin</p>
+            <p class="takeaway">Music is pattern recognition. Emotion emerges from expectation violation.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Storytelling -->
+      <section class="reading-section">
+        <h2>Storytelling</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3>The 4-Hour Work Week</h3>
+            <p class="author">Tim Ferriss</p>
+            <p class="takeaway">Deferred life plans are broken. Design your lifestyle first, career second.</p>
+          </div>
+          <div class="book">
+            <h3>Tools of Titans</h3>
+            <p class="author">Tim Ferriss</p>
+            <p class="takeaway">World-class performance has patterns. Morning routines and journaling compound.</p>
+          </div>
+          <div class="book">
+            <h3>Story</h3>
+            <p class="author">Robert McKee</p>
+            <p class="takeaway">Structure creates emotion. Every story is about a protagonist confronting obstacles to reach desire.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Philosophy -->
+      <section class="reading-section">
+        <h2>Philosophy</h2>
+        <div class="book-list">
+          <div class="book">
+            <h3>Man's Search for Meaning</h3>
+            <p class="author">Viktor E. Frankl</p>
+            <p class="takeaway">Between stimulus and response lies freedom. Meaning is chosen, not given.</p>
+          </div>
+          <div class="book">
+            <h3>Meditations</h3>
+            <p class="author">Marcus Aurelius</p>
+            <p class="takeaway">Control what you can control. Everything else is noise.</p>
+          </div>
+          <div class="book">
+            <h3>The Republic</h3>
+            <p class="author">Plato</p>
+            <p class="takeaway">Justice is harmony. The ideal state mirrors the ideal soul.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <style>
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .page-header {
+      margin-bottom: var(--space-2xl);
+      padding-bottom: var(--space-xl);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-md);
+    }
+
+    .intro {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 60ch;
+      margin-bottom: var(--space-sm);
+    }
+
+    .last-updated {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .library-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2xl);
+    }
+
+    .reading-section {
+      padding-bottom: var(--space-xl);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .reading-section:last-child {
+      border-bottom: none;
+    }
+
+    .reading-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-lg);
+      color: var(--primary);
+    }
+
+    .currently-reading {
+      background: var(--surface);
+      padding: var(--space-lg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .currently-reading h2 {
+      margin-top: 0;
+    }
+
+    .book-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+
+    .book {
+      padding-left: var(--space-md);
+      border-left: 2px solid var(--border);
+      transition: border-color 0.2s;
+    }
+
+    .book:hover {
+      border-left-color: var(--primary);
+    }
+
+    .book h3 {
+      font-size: 1.1rem;
+      margin-bottom: var(--space-xs);
+      font-weight: 500;
+    }
+
+    .book .author {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: var(--space-sm);
+      font-style: italic;
+    }
+
+    .book .takeaway {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--ink);
+    }
+
+    @media (max-width: 768px) {
+      .page-header h1 {
+        font-size: 2rem;
+      }
+
+      .intro {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</BaseLayout>

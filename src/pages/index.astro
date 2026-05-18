@@ -20,70 +20,72 @@ const posts = allPosts
       <span class="moon">☾</span>
     </button>
 
-    <!-- Hero section -->
-    <section class="hero">
-      <h1 class="hero-sentence">
-        I build systems for human sovereignty — in code, in music, in stillness, on the page.
-      </h1>
-    </section>
+    <main>
+      <!-- Hero section -->
+      <section class="hero">
+        <h1 class="hero-sentence">
+          I build systems for human sovereignty — in code, in music, in stillness, on the page.
+        </h1>
+      </section>
 
-    <!-- Four register cards -->
-    <section class="registers">
-      <a href="/dev" class="register-card">
-        <h2>Engineering</h2>
-        <p>Building scalable systems and developer tools at Yubico. TypeScript, C#, authentication infrastructure.</p>
-        <span class="arrow">→</span>
-      </a>
+      <!-- Four register cards -->
+      <section class="registers" aria-label="Practice Areas">
+        <a href="/dev" class="register-card">
+          <h2>Engineering</h2>
+          <p>Building scalable systems and developer tools at Yubico. TypeScript, C#, authentication infrastructure.</p>
+          <span class="arrow">→</span>
+        </a>
 
-      <a href="/music" class="register-card">
-        <h2>Music</h2>
-        <p>Artist management (Echological), DJ performances as Moonkin, flow arts community building.</p>
-        <span class="arrow">→</span>
-      </a>
+        <a href="/music" class="register-card">
+          <h2>Music</h2>
+          <p>Artist management (Echological), DJ performances as Moonkin, flow arts community building.</p>
+          <span class="arrow">→</span>
+        </a>
 
-      <a href="/coaching" class="register-card">
-        <h2>Coaching</h2>
-        <p>Zen coaching, meditation facilitation, men's circles, and retreats for inner work.</p>
-        <span class="arrow">→</span>
-      </a>
+        <a href="/coaching" class="register-card">
+          <h2>Coaching</h2>
+          <p>Zen coaching, meditation facilitation, men's circles, and retreats for inner work.</p>
+          <span class="arrow">→</span>
+        </a>
 
-      <a href="/blog" class="register-card">
-        <h2>Writing</h2>
-        <p>Essays on sovereignty, systems thinking, macro finance, consciousness, and the practice of integration.</p>
-        <span class="arrow">→</span>
-      </a>
-    </section>
+        <a href="/blog" class="register-card">
+          <h2>Writing</h2>
+          <p>Essays on sovereignty, systems thinking, macro finance, consciousness, and the practice of integration.</p>
+          <span class="arrow">→</span>
+        </a>
+      </section>
 
-    <!-- Latest blog posts -->
-    {
-      posts.length > 0 && (
-        <section class="latest-posts">
-          <h2>Latest Posts</h2>
-          <div class="posts-grid">
-            {posts.map((post) => (
-              <a href={`/blog/${post.data.slug}`} class="post-card">
-                <time datetime={post.data.pubDate.toISOString()}>
-                  {post.data.pubDate.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </time>
-                <h3>{post.data.title}</h3>
-                <p>{post.data.description}</p>
-              </a>
-            ))}
-          </div>
-        </section>
-      )
-    }
+      <!-- Latest blog posts -->
+      {
+        posts.length > 0 && (
+          <section class="latest-posts">
+            <h2>Latest Posts</h2>
+            <div class="posts-grid">
+              {posts.map((post) => (
+                <a href={`/blog/${post.data.slug}`} class="post-card">
+                  <time datetime={post.data.pubDate.toISOString()}>
+                    {post.data.pubDate.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </time>
+                  <h3>{post.data.title}</h3>
+                  <p>{post.data.description}</p>
+                </a>
+              ))}
+            </div>
+          </section>
+        )
+      }
 
-    <!-- Newsletter signup -->
-    <section class="newsletter">
-      <h2>Newsletter</h2>
-      <p>Occasional essays on sovereignty, systems, and synthesis. No spam, just signal.</p>
-      <SubscribeForm />
-    </section>
+      <!-- Newsletter signup -->
+      <section class="newsletter">
+        <h2>Newsletter</h2>
+        <p>Occasional essays on sovereignty, systems, and synthesis. No spam, just signal.</p>
+        <SubscribeForm />
+      </section>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">
@@ -91,6 +93,8 @@ const posts = allPosts
         <a href="/about">About</a>
         <span class="sep">·</span>
         <a href="/now">Now</a>
+        <span class="sep">·</span>
+        <a href="/library">Library</a>
         <span class="sep">·</span>
         <a href="/projects">Projects</a>
         <span class="sep">·</span>

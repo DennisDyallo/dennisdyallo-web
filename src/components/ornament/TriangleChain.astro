@@ -1,0 +1,38 @@
+---
+// TriangleChain — Original geometric ornament
+// Linked triangular forms suggesting connection, structure
+// Single-color, controlled repetition, restraint
+const { class: className = '' } = Astro.props;
+---
+
+<svg class={`ornament ${className}`} width="140" height="30" viewBox="0 0 140 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <title>Triangle Chain Ornament</title>
+  <!-- First triangle -->
+  <path d="M 20 5 L 30 20 L 10 20 Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="miter"/>
+
+  <!-- Connecting line -->
+  <line x1="30" y1="20" x2="40" y2="20" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+
+  <!-- Second triangle (inverted) -->
+  <path d="M 40 20 L 50 5 L 60 20 Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="miter"/>
+
+  <!-- Center connector -->
+  <circle cx="70" cy="12.5" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
+
+  <!-- Third triangle -->
+  <path d="M 80 20 L 90 5 L 100 20 Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="miter"/>
+
+  <!-- Connecting line -->
+  <line x1="100" y1="20" x2="110" y2="20" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+
+  <!-- Fourth triangle (inverted) -->
+  <path d="M 110 5 L 120 20 L 130 5 Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="miter"/>
+</svg>
+
+<style>
+  .ornament {
+    display: block;
+    margin: 0 auto;
+    color: var(--border);
+  }
+</style>
