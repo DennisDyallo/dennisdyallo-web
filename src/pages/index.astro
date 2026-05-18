@@ -17,6 +17,9 @@ const posts = allPosts
     <main>
       <!-- Hero section -->
       <section class="hero">
+        <div class="hero-mark" aria-hidden="true">
+          <RupicolaMark size={280} />
+        </div>
         <h1 class="hero-sentence">
           I build systems for human sovereignty — in code, in music, in stillness, on the page.
         </h1>
@@ -156,6 +159,16 @@ const posts = allPosts
 
     .hero {
       margin-bottom: var(--space-2xl);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: var(--space-2xl);
+    }
+
+    .hero-mark {
+      color: var(--primary);
+      flex-shrink: 0;
+      line-height: 0;
     }
 
     .hero-sentence {
@@ -316,6 +329,17 @@ const posts = allPosts
     }
 
     @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+        text-align: left;
+      }
+
+      .hero-mark :global(.rupicola-mark) {
+        width: 180px !important;
+        height: 180px !important;
+      }
+
       .hero-sentence {
         font-size: 1.5rem;
       }
