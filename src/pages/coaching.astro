@@ -2,42 +2,66 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Coaching" description="Zen coaching, meditation facilitation, and inner work.">
-  <div class="container">
-    <h1>Coaching</h1>
-    <div class="content">
-      <p>
-        Zen coaching rooted in Vipassana, yoga, and contemplative practice. Work for individuals
-        navigating change, creative blocks, or deeper self-understanding.
-      </p>
-      <p>
-        <em>Full service page with booking CTA coming in Phase 2.</em>
-      </p>
+<BaseLayout title="Coaching" description="Zen coaching, meditation facilitation, and grounded inner work.">
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Coaching</p>
+      <h1>Grounded inquiry for people who are done performing clarity.</h1>
+      <p>Zen coaching, meditation practice, men's circles, and retreats have taught me the same thing: people rarely need another framework before they need a clean mirror.</p>
+      <a class="cta" href="mailto:dennis@dyallo.se?subject=Zen%20Coaching%20Inquiry">Ask about a session</a>
+    </section>
+
+    <div class="sections">
+      <section>
+        <h2>Who This Is For</h2>
+        <p>This is for people navigating change, creative blocks, relational friction, spiritual bypassing, or the quiet sense that the old operating system is no longer honest.</p>
+        <p>It fits best if you want directness without theater: no guru posture, no productivity cosplay, no promise that one session will turn your life into a diagram.</p>
+      </section>
+      <section>
+        <h2>What A Session Looks Like</h2>
+        <p>We start with what is actually alive. Not the polished story, the thing underneath it. From there we slow down enough to see what the body, language, and attention are already revealing.</p>
+        <p>Sessions may include inquiry, silence, somatic tracking, meditation context, practical next steps, or simply staying with the part of the truth that has not had enough room.</p>
+      </section>
+      <section>
+        <h2>Training And Approach</h2>
+        <p>I am a certified Zen Coach with practice roots in Vipassana meditation, yoga, contemplative traditions, men's circles, movement work, and retreat facilitation.</p>
+        <p>The approach is warm and direct. Less guru, more honest mirror. I care about sovereignty: helping you return to your own seeing instead of becoming dependent on mine.</p>
+      </section>
+      <section>
+        <h2>Pricing</h2>
+        <p>By inquiry — sessions start at [TBD] SEK.</p>
+        <p>Dennis will replace this placeholder with the final pricing and booking system once the offer is ready for public traffic.</p>
+      </section>
+      <section>
+        <h2>FAQs</h2>
+        <div class="faq">
+          <h3>Is this therapy?</h3>
+          <p>No. Coaching can be deeply useful, but it is not clinical treatment, diagnosis, or a substitute for therapy.</p>
+          <h3>Do I need meditation experience?</h3>
+          <p>No. A willingness to pay attention honestly is more important than any formal practice history.</p>
+          <h3>Can sessions be remote?</h3>
+          <p>Yes. Remote sessions are the default placeholder for now; in-person work can be discussed when geography and context make sense.</p>
+        </div>
+      </section>
+      <section>
+        <h2>Contact</h2>
+        <p>Email <a href="mailto:dennis@dyallo.se">dennis@dyallo.se</a> with a few lines about what you are navigating and what made you reach out now.</p>
+      </section>
     </div>
-  </div>
+  </main>
 
   <style>
-    .container {
-      max-width: var(--reading-width);
-      margin: 0 auto;
-      padding: var(--space-2xl) var(--space-lg);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-xl);
-    }
-
-    .content p {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      margin-bottom: var(--space-lg);
-      color: var(--muted);
-    }
-
-    .content em {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .container { max-width: 900px; margin: 0 auto; padding: var(--space-3xl) var(--space-lg); }
+    .hero { max-width: 720px; margin-bottom: var(--space-3xl); }
+    .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+    h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
+    .hero p, section p { color: var(--muted); line-height: 1.65; }
+    .cta { display: inline-flex; margin-top: var(--space-lg); padding: var(--space-sm) var(--space-lg); background: var(--primary); color: var(--bg); border-radius: var(--radius-sm); font-weight: 600; }
+    .sections { display: grid; gap: var(--space-xl); }
+    section:not(.hero) { padding-bottom: var(--space-xl); border-bottom: 1px solid var(--border); }
+    h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
+    h3 { font-family: var(--font-sans); font-size: var(--type-body); font-weight: 600; margin-top: var(--space-md); margin-bottom: var(--space-xs); }
+    p + p { margin-top: var(--space-sm); }
+    @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
   </style>
 </BaseLayout>

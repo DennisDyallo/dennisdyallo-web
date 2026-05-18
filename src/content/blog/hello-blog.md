@@ -21,4 +21,6 @@ dyallo.se is the convergence node. One practice, four expressions. The homepage 
 
 This is the first post. More to come on each register, and on how they compound.
 
+Start with [[About]] if you want the longer throughline.
+
 Welcome.

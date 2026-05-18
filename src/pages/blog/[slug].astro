@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SubscribeForm from '../../components/SubscribeForm.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -14,6 +15,7 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+const ogImage = entry.data.ogImage || `/og/${entry.data.slug}.png`;
 
 // JSON-LD Article schema
 const articleJsonLd = {
@@ -27,10 +29,8 @@ const articleJsonLd = {
     '@type': 'Person',
     name: 'Dennis Dyall',
   },
-  image: entry.data.ogImage || `/og-image.jpg`,
+  image: ogImage,
 };
-
-const ogImage = entry.data.ogImage || `/og-image.jpg`;
 ---
 
 <BaseLayout
@@ -72,10 +72,7 @@ const ogImage = entry.data.ogImage || `/og-image.jpg`;
       <div class="subscribe-cta">
         <h3>Get new essays via email</h3>
         <p>No spam, just signal.</p>
-        <form class="newsletter-form" action="https://buttondown.email/api/emails/embed-subscribe/dyallo" method="post" target="popupwindow">
-          <input type="email" name="email" placeholder="your@email.com" required />
-          <button type="submit">Subscribe</button>
-        </form>
+        <SubscribeForm />
       </div>
     </footer>
   </article>
@@ -240,46 +237,12 @@ const ogImage = entry.data.ogImage || `/og-image.jpg`;
       margin-bottom: var(--space-lg);
     }
 
-    .newsletter-form {
-      display: flex;
-      gap: var(--space-sm);
-      max-width: 100%;
-    }
-
-    .newsletter-form input {
-      flex: 1;
-      padding: var(--space-sm) var(--space-md);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-family: var(--font-sans);
-      font-size: 0.95rem;
-      color: var(--ink);
-    }
-
-    .newsletter-form button {
-      padding: var(--space-sm) var(--space-lg);
-      background: var(--primary);
-      color: var(--bg);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-sans);
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .newsletter-form button:hover {
-      opacity: 0.85;
-    }
-
     @media (max-width: 768px) {
       .post-header h1 {
         font-size: 2rem;
       }
 
-      .newsletter-form {
+      .subscribe-cta :global(.newsletter-form) {
         flex-direction: column;
       }
     }

@@ -1,43 +1,70 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const cases = [
+  {
+    title: 'dyallo.se',
+    problem: 'The old site had a clear voice, but no durable publishing system and no visible structure for the four-register convergence.',
+    approach: 'Rebuild as an Astro static site with register pages, blog content collections, RSS, sitemap, Satori OG images, Buttondown subscription, and a vault-to-site workflow.',
+    outcome: 'A single public surface where engineering, music, coaching, projects, and writing can compound under one domain.',
+    tech: 'Astro, TypeScript, Bun, Satori, Sharp, Buttondown, Caddy',
+    href: 'https://dyallo.se',
+  },
+  {
+    title: 'PAI',
+    problem: 'AI assistants are powerful, but without memory, local context, and clear operating principles they become another rented interface.',
+    approach: 'Design a personal AI infrastructure layer around memory, workflows, agent handoffs, publishing, and Dennis-owned context.',
+    outcome: 'A sovereignty-aligned operating system for personal work, still evolving in private and selectively surfaced through writing.',
+    tech: 'TypeScript, local tooling, agent workflows, markdown, structured prompts',
+    href: '/blog/hello-blog',
+  },
+  {
+    title: 'Echological.fm',
+    problem: 'Artists working between tradition and contemporary expression need infrastructure that translates their work without flattening it.',
+    approach: 'Build artist pages, EPK material, booking narrative, and lightweight operational systems around a carefully chosen roster.',
+    outcome: 'A clearer management surface for Hazayana, Naomi Runa, Andreas Lång, Sophie von Matern, and Felicia Falck.',
+    tech: 'Web publishing, artist narrative, booking systems, media assets',
+    href: 'https://echological.fm',
+  },
+];
 ---
 
-<BaseLayout title="Projects" description="Case studies and built systems.">
-  <div class="container">
-    <h1>Projects</h1>
-    <div class="content">
-      <p>
-        Selected work: Yubico SDK development, PAI infrastructure, Echological artist platform,
-        Skattata bookkeeping CLI, and this site itself.
-      </p>
-      <p>
-        <em>Full case studies coming in Phase 2.</em>
-      </p>
+<BaseLayout title="Projects" description="Case studies in sovereignty-aligned systems, publishing, and artist infrastructure.">
+  <main class="container">
+    <header class="page-header">
+      <p class="eyebrow">Projects</p>
+      <h1>Case studies in systems that make people more sovereign.</h1>
+      <p>Some projects are code. Some are artist infrastructure. Some are public surfaces for a private operating system. The common measure is whether the system returns agency to the person using it.</p>
+    </header>
+
+    <div class="case-list">
+      {cases.map((item) => (
+        <article class="case-card">
+          <h2>{item.title}</h2>
+          <dl>
+            <dt>Problem</dt><dd>{item.problem}</dd>
+            <dt>Approach</dt><dd>{item.approach}</dd>
+            <dt>Outcome</dt><dd>{item.outcome}</dd>
+            <dt>Tech</dt><dd>{item.tech}</dd>
+          </dl>
+          <a href={item.href}>View project</a>
+        </article>
+      ))}
     </div>
-  </div>
+  </main>
 
   <style>
-    .container {
-      max-width: var(--reading-width);
-      margin: 0 auto;
-      padding: var(--space-2xl) var(--space-lg);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-xl);
-    }
-
-    .content p {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      margin-bottom: var(--space-lg);
-      color: var(--muted);
-    }
-
-    .content em {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .container { max-width: 980px; margin: 0 auto; padding: var(--space-3xl) var(--space-lg); }
+    .page-header { max-width: 780px; margin-bottom: var(--space-2xl); }
+    .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+    h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
+    .page-header p { color: var(--muted); line-height: 1.65; }
+    .case-list { display: grid; gap: var(--space-xl); }
+    .case-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-xl); }
+    h2 { font-size: var(--type-h3); margin-bottom: var(--space-lg); }
+    dl { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-sm) var(--space-lg); margin-bottom: var(--space-lg); }
+    dt { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.06em; }
+    dd { color: var(--muted); line-height: 1.6; }
+    @media (max-width: 768px) { h1 { font-size: var(--type-h2); } dl { grid-template-columns: 1fr; gap: var(--space-xs); } dd { margin-bottom: var(--space-sm); } }
   </style>
 </BaseLayout>

@@ -2,42 +2,55 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Engineering" description="Building authentication infrastructure and developer tools at Yubico.">
-  <div class="container">
-    <h1>Engineering</h1>
-    <div class="content">
-      <p>
-        Senior Software Engineer at Yubico. Building cross-platform authentication SDKs,
-        CI/CD security hardening, and developer tooling. TypeScript, C#, distributed systems.
-      </p>
-      <p>
-        <em>Full portfolio and case studies coming in Phase 2.</em>
-      </p>
-    </div>
-  </div>
+<BaseLayout title="Engineering" description="Security-minded software engineering, developer tooling, and sovereignty-aligned systems.">
+  <main class="container">
+    <header class="page-header">
+      <p class="eyebrow">Engineering</p>
+      <h1>Systems that return power to the person using them.</h1>
+      <p>Senior Software Engineer at Yubico, with 10+ years across authentication, media platforms, developer tooling, CI/CD, and full-stack systems.</p>
+    </header>
+
+    <section>
+      <h2>Current Role</h2>
+      <p>At Yubico I work on cross-platform authentication SDKs and developer infrastructure. The practical work is code, APIs, releases, CI hardening, and documentation. The deeper work is making strong authentication easier to adopt without hiding the important edges.</p>
+    </section>
+    <section>
+      <h2>What Kind Of Engineering Matters Here</h2>
+      <p>I am drawn to security, open systems, local-first tools, and infrastructure that gives users more agency instead of more dependency. Good software should feel boring in production and liberating in use.</p>
+    </section>
+    <section>
+      <h2>Highlight Projects</h2>
+      <div class="project-list">
+        <article><h3>PAI</h3><p>Personal AI infrastructure for memory, agent workflows, publishing, and sovereignty-oriented automation.</p></article>
+        <article><h3>Skattata</h3><p>A bookkeeping and tax workflow tool shaped around reducing friction in Swedish administrative life.</p></article>
+        <article><h3>Echological Infrastructure</h3><p>Artist surfaces, booking flows, and narrative infrastructure for a roster that moves between tradition and contemporary expression.</p></article>
+        <article><h3>NanoClaw</h3><p>A compact technical experiment from the personal lab: small surface area, clear interface, useful leverage.</p></article>
+        <article><h3>dyallo.se</h3><p>This Astro rebuild: static-first publishing, Satori OG images, RSS, sitemap, Buttondown, and vault-to-site workflow.</p></article>
+      </div>
+    </section>
+    <section>
+      <h2>Stack</h2>
+      <p>C# / .NET, TypeScript, Astro, React, Python, gRPC, Docker, Kubernetes, GitHub Actions, Cloudflare, Caddy, Linux, and enough shell to remove unnecessary ceremony.</p>
+    </section>
+    <section>
+      <h2>Work Together</h2>
+      <p>I am selective with consulting. Good fits: developer tooling, authentication, systems architecture, publishing pipelines, AI workflow infrastructure, and quiet high-leverage software for people who care about ownership.</p>
+      <a class="cta" href="mailto:dennis@dyallo.se?subject=Engineering%20Inquiry">Start a conversation</a>
+    </section>
+  </main>
 
   <style>
-    .container {
-      max-width: var(--reading-width);
-      margin: 0 auto;
-      padding: var(--space-2xl) var(--space-lg);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-xl);
-    }
-
-    .content p {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      margin-bottom: var(--space-lg);
-      color: var(--muted);
-    }
-
-    .content em {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .container { max-width: 920px; margin: 0 auto; padding: var(--space-3xl) var(--space-lg); }
+    .page-header { max-width: 760px; margin-bottom: var(--space-2xl); }
+    .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+    h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
+    h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
+    h3 { font-size: var(--type-h5); margin-bottom: var(--space-xs); }
+    p { color: var(--muted); line-height: 1.65; }
+    section { padding: var(--space-xl) 0; border-bottom: 1px solid var(--border); }
+    .project-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-md); }
+    article { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-lg); }
+    .cta { display: inline-flex; margin-top: var(--space-lg); padding: var(--space-sm) var(--space-lg); border: 1px solid var(--primary); border-radius: var(--radius-sm); }
+    @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
   </style>
 </BaseLayout>

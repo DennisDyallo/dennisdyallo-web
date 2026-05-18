@@ -2,42 +2,31 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="About" description="The convergence of engineering, music, coaching, and writing.">
-  <div class="container">
-    <h1>About</h1>
+<BaseLayout title="About" description="How engineering, music, coaching, and writing became one practice.">
+  <main class="container">
+    <p class="eyebrow">About</p>
+    <h1>How the four registers became one practice.</h1>
     <div class="content">
-      <p>
-        The four registers — engineering, music, coaching, writing — are not separate practices.
-        They're one throughline: building systems for human sovereignty.
-      </p>
-      <p>
-        <em>Full narrative coming in Phase 2.</em>
-      </p>
+      <p>I used to think I had several lives running in parallel. There was the software engineer who cared about authentication, reliability, APIs, and the craft of building systems other people could trust. There was the music person: DJ, fire performer, community builder, and later artist manager. There was the inner-work path: Vipassana, zen coaching, men's circles, retreats, and the long slow education of becoming less impressed by my own stories. And there was the writer, trying to make the pattern visible before it disappeared back into the next project.</p>
+      <p>For a while I treated those registers as separate rooms. Different language, different clothes, different audiences. That worked well enough on paper, but it never felt completely honest. The more I followed each path seriously, the more they kept pointing at the same thing: sovereignty. Not sovereignty as isolation or control. Sovereignty as the capacity to stand in direct relationship with reality, with your tools, with your body, with your people, and with the consequences of your choices.</p>
+      <p>I grew up with a strong attraction to systems. I wanted to know how things worked underneath the visible layer. Computers gave that curiosity a playground: here was a world where structure mattered, where invisible decisions became real behavior, where a small flaw in an interface could shape what thousands of people were able to do. Over time that curiosity became a profession.</p>
+      <p>I have spent more than ten years building software across media, infrastructure, and security. At Sveriges Radio I worked on platform features for a public-service audience of millions, learning what reliability means when the thing you build is part of people's daily life. At Yubico I work as a Senior Software Engineer on authentication SDKs and developer tooling, much closer to the root question of digital agency: who holds the keys, who can prove identity, and how much trust are we forced to outsource to systems we do not understand?</p>
+      <p>That question matters to me beyond code. Good engineering is not only clever architecture. It is moral attention expressed through interfaces, defaults, documentation, and failure modes. Security work especially has a sober quality: you are building for the moments when things go wrong. The best systems give people more ground under their feet. They do not ask for devotion. They quietly return power.</p>
+      <p>Music taught me the same lesson through a different body. As Moonkin, I spent years DJing electronic and psychedelic music, performing fire shows, and helping build Stockholm Flow into Scandinavia's largest flow arts community. A dance floor is also a system. So is a festival. So is an artist's career. There are flows of attention, trust, money, timing, story, and risk. When those flows are tended well, people become more themselves, not less.</p>
+      <p>That eventually became Echological, where I manage and represent artists who move between tradition and contemporary expression. The current roster includes Hazayana Collective, Naomi Runa, Andreas Lång, Sophie von Matern, and Felicia Falck. Artist management, when it is done with care, is infrastructure work for creative sovereignty. It means helping artists stay connected to their own signal while giving the outside world enough structure to meet them: booking, narrative, EPKs, production context, and a steady hand when the machinery gets loud.</p>
+      <p>The coaching register came from a more private necessity. Vipassana gave me a direct encounter with how much of life is filtered through reaction. Zen coaching gave me a language for inquiry that did not require performance. Men's circles and retreats taught me the value of a clean container: enough structure to make honesty possible, enough warmth that people do not have to armor themselves to enter. My approach is grounded and direct, less guru, more honest mirror. I am not interested in spiritual theater. I am interested in what becomes possible when someone stops negotiating with the truth of their own experience.</p>
+      <p>Writing is where the registers meet in public. It is the practice that lets the engineering mind speak with the artist manager, the facilitator, the meditator, and the citizen trying to understand the macro systems we live inside. I write to make the throughline legible: authentication and attention, creative direction and inner work, personal AI infrastructure and old contemplative disciplines, all asking versions of the same question.</p>
+      <p>dyallo.se is built as a convergence node because the integration is the point. If you arrive through the engineering door, you should still be able to feel the music. If you arrive through coaching, the systems thinking should be visible. If you arrive through an artist, the concern for sovereignty should not be abstract. The registers are different instruments, but they are tuned to the same key.</p>
+      <p>That key is sovereignty: the patient work of becoming harder to capture, easier to trust, and more available to what is actually here.</p>
     </div>
-  </div>
+  </main>
 
   <style>
-    .container {
-      max-width: var(--reading-width);
-      margin: 0 auto;
-      padding: var(--space-2xl) var(--space-lg);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-xl);
-    }
-
-    .content p {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      margin-bottom: var(--space-lg);
-      color: var(--muted);
-    }
-
-    .content em {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .container { max-width: var(--reading-width); margin: 0 auto; padding: var(--space-3xl) var(--space-lg); }
+    .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+    h1 { font-size: var(--type-h1); margin-bottom: var(--space-xl); }
+    .content { font-family: var(--font-serif); font-size: 1.12rem; line-height: 1.75; }
+    .content p { margin-bottom: var(--space-lg); color: var(--ink); }
+    @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
   </style>
 </BaseLayout>

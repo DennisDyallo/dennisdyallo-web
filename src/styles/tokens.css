@@ -16,17 +16,46 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 
   /* Spacing */
+  --space-2xs: 0.125rem;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
   --space-xl: 2rem;
   --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  /* Type scale */
+  --type-small: 0.875rem;
+  --type-body: 1rem;
+  --type-h6: 1rem;
+  --type-h5: 1.125rem;
+  --type-h4: 1.25rem;
+  --type-h3: 1.5rem;
+  --type-h2: 2rem;
+  --type-h1: 2.75rem;
 
   /* Radii */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 2px rgba(15, 11, 10, 0.08);
+  --shadow-card: 0 8px 28px rgba(15, 11, 10, 0.12);
+  --shadow-elevated: 0 18px 60px rgba(15, 11, 10, 0.2);
+
+  /* Z-index */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-modal: 1000;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
 
   /* Reading width */
   --reading-width: 70ch;

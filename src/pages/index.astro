@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import RupicolaMark from '../components/RupicolaMark.astro';
+import SubscribeForm from '../components/SubscribeForm.astro';
 import { getCollection } from 'astro:content';
 
 // Get latest 3 blog posts
@@ -80,10 +82,7 @@ const posts = allPosts
     <section class="newsletter">
       <h2>Newsletter</h2>
       <p>Occasional essays on sovereignty, systems, and synthesis. No spam, just signal.</p>
-      <form class="newsletter-form" action="https://buttondown.email/api/emails/embed-subscribe/dyallo" method="post" target="popupwindow">
-        <input type="email" name="email" placeholder="your@email.com" required />
-        <button type="submit">Subscribe</button>
-      </form>
+      <SubscribeForm />
     </section>
 
     <!-- Footer -->
@@ -102,12 +101,7 @@ const posts = allPosts
         <a href="https://www.linkedin.com/in/dennis-dyallo" target="_blank" rel="noopener">LinkedIn</a>
       </div>
       <div class="footer-mark">
-        <!-- Rupicola signature mark placeholder -->
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="8" r="2" fill="currentColor"/>
-          <path d="M8 10 L12 16 L16 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10 6 Q12 2 14 6" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        </svg>
+        <RupicolaMark />
       </div>
     </footer>
   </div>
@@ -273,40 +267,6 @@ const posts = allPosts
       margin-bottom: var(--space-lg);
     }
 
-    .newsletter-form {
-      display: flex;
-      gap: var(--space-sm);
-      max-width: 480px;
-    }
-
-    .newsletter-form input {
-      flex: 1;
-      padding: var(--space-sm) var(--space-md);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-family: var(--font-sans);
-      font-size: 0.95rem;
-      color: var(--ink);
-    }
-
-    .newsletter-form button {
-      padding: var(--space-sm) var(--space-lg);
-      background: var(--primary);
-      color: var(--bg);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-sans);
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .newsletter-form button:hover {
-      opacity: 0.85;
-    }
-
     .footer {
       padding-top: var(--space-xl);
       border-top: 1px solid var(--border);
@@ -350,7 +310,7 @@ const posts = allPosts
         grid-template-columns: 1fr;
       }
 
-      .newsletter-form {
+      .newsletter :global(.newsletter-form) {
         flex-direction: column;
       }
     }

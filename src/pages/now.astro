@@ -1,42 +1,64 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const updated = new Date('2026-05-18T12:00:00+02:00');
 ---
 
-<BaseLayout title="Now" description="What I'm focused on right now across all four registers.">
-  <div class="container">
-    <h1>Now</h1>
-    <div class="content">
-      <p>
-        A snapshot of what's alive across engineering, music, coaching, and writing.
-      </p>
-      <p>
-        <em>Full /now page coming in Phase 2.</em>
-      </p>
+<BaseLayout title="Now" description="A dated snapshot of what is alive across the four registers.">
+  <main class="container">
+    <header class="page-header">
+      <p class="eyebrow">Now</p>
+      <h1>What is alive right now.</h1>
+      <p class="updated">last updated: <time datetime={updated.toISOString()}>18 May 2026</time></p>
+    </header>
+
+    <div class="snapshot">
+      <section>
+        <h2>Building</h2>
+        <p>At Yubico, I am focused on developer-facing authentication infrastructure: SDKs, tooling, CI hardening, and the parts of security work that make strong defaults feel ordinary.</p>
+        <p>In parallel, PAI is becoming my personal AI infrastructure: a local-first operating layer for memory, agent workflows, publishing, and the sovereignty stack around my own work.</p>
+      </section>
+      <section>
+        <h2>Performing / Managing</h2>
+        <p>Echological is the active music home: Hazayana Collective, Naomi Runa, Andreas Lång, Sophie von Matern, and Felicia Falck each need different kinds of scaffolding, care, and narrative precision.</p>
+        <p>The next Echological work is about clearer artist surfaces, better booking materials, and a more deliberate bridge between live performance, community, and long-term careers.</p>
+      </section>
+      <section>
+        <h2>Practicing</h2>
+        <p>Meditation is in a maintenance season: ordinary sits, body awareness, and returning to Vipassana basics when the system gets noisy.</p>
+        <p>Retreats, men's circles, and zen coaching continue as calibration: less performance, more contact with what is actually happening.</p>
+      </section>
+      <section>
+        <h2>Reading / Listening</h2>
+        <ul>
+          <li><em>The Sovereign Individual</em>, James Dale Davidson and William Rees-Mogg</li>
+          <li><em>Seeing That Frees</em>, Rob Burbea</li>
+          <li><em>The Creative Act</em>, Rick Rubin</li>
+          <li><em>Debt: The First 5,000 Years</em>, David Graeber</li>
+          <li>Podcasts: Bankless, The Knowledge Project, and long-form conversations on AI tooling and contemplative practice.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Watching For</h2>
+        <p>I am watching how personal AI changes the boundary between memory, agency, and dependency. The useful question is not "can the model do it?" but "does this make a human more sovereign or easier to capture?"</p>
+        <p>Spring in Sweden has the same teaching in a simpler language: thaw first, growth second.</p>
+      </section>
     </div>
-  </div>
+  </main>
 
   <style>
-    .container {
-      max-width: var(--reading-width);
-      margin: 0 auto;
-      padding: var(--space-2xl) var(--space-lg);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-xl);
-    }
-
-    .content p {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      margin-bottom: var(--space-lg);
-      color: var(--muted);
-    }
-
-    .content em {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .container { max-width: 860px; margin: 0 auto; padding: var(--space-3xl) var(--space-lg); }
+    .page-header { margin-bottom: var(--space-2xl); }
+    .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+    h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
+    .updated { color: var(--muted); font-size: var(--type-small); }
+    .snapshot { display: grid; gap: var(--space-xl); }
+    section { padding-bottom: var(--space-xl); border-bottom: 1px solid var(--border); }
+    h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
+    p, li { color: var(--muted); line-height: 1.65; }
+    p + p { margin-top: var(--space-sm); }
+    ul { padding-left: var(--space-lg); }
+    li { margin-bottom: var(--space-xs); }
+    @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
   </style>
 </BaseLayout>

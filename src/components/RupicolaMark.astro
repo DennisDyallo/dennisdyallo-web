@@ -1,0 +1,33 @@
+---
+import { rupicolaSvg } from '../lib/rupicola';
+
+interface Props {
+  size?: number;
+  label?: string;
+}
+
+const { size = 24, label = 'Rupicola signature mark' } = Astro.props;
+---
+
+<span
+  class="rupicola-mark"
+  role="img"
+  aria-label={label}
+  style={`--mark-size: ${size}px`}
+  set:html={rupicolaSvg}
+/>
+
+<style>
+  .rupicola-mark {
+    display: inline-flex;
+    width: var(--mark-size);
+    height: var(--mark-size);
+    color: currentColor;
+    line-height: 0;
+  }
+
+  .rupicola-mark :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+</style>

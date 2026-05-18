@@ -1,0 +1,111 @@
+---
+interface Props {
+  label?: string;
+}
+
+const { label = 'Subscribe' } = Astro.props;
+---
+
+<form
+  class="newsletter-form"
+  action="https://buttondown.email/api/emails/embed-subscribe/dyallo"
+  method="post"
+  target="popupwindow"
+  data-subscribe-form
+>
+  <label class="sr-only" for="bd-email">Email address</label>
+  <input id="bd-email" type="email" name="email" placeholder="your@email.com" required />
+  <button type="submit">{label}</button>
+  <p class="form-message form-message-success" data-success role="status" aria-live="polite">
+    Buttondown opened in a new window. Finish there to confirm your subscription.
+  </p>
+  <p class="form-message form-message-error" data-error role="alert">
+    Popup blocked. The form still submits if you allow the new window or open it again.
+  </p>
+</form>
+
+<script>
+  function initSubscribeForms() {
+    document.querySelectorAll('[data-subscribe-form]').forEach((form) => {
+      if (form instanceof HTMLFormElement && !form.dataset.bound) {
+        form.dataset.bound = 'true';
+        form.addEventListener('submit', () => {
+          const popup = window.open('', 'popupwindow', 'scrollbars=yes,width=640,height=720');
+          const success = form.querySelector('[data-success]');
+          const error = form.querySelector('[data-error]');
+          success?.classList.toggle('is-visible', !!popup);
+          error?.classList.toggle('is-visible', !popup);
+        });
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initSubscribeForms);
+  document.addEventListener('astro:after-swap', initSubscribeForms);
+</script>
+
+<style>
+  .newsletter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    max-width: 520px;
+  }
+
+  .newsletter-form input {
+    flex: 1 1 240px;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: var(--type-body);
+    color: var(--ink);
+  }
+
+  .newsletter-form button {
+    flex: 0 0 auto;
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--primary);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: var(--type-body);
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+  }
+
+  .newsletter-form button:hover {
+    opacity: 0.85;
+  }
+
+  .form-message {
+    display: none;
+    flex-basis: 100%;
+    margin: var(--space-xs) 0 0;
+    font-size: var(--type-small);
+    color: var(--muted);
+  }
+
+  .form-message-error {
+    color: var(--accent-rose);
+  }
+
+  .form-message.is-visible {
+    display: block;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

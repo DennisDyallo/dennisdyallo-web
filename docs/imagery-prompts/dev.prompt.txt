@@ -1,0 +1,15 @@
+# follows /Users/Dennis.Dyall/Documents/Sunthings_AppStorage_EU_e2e/Projects/Dyallo Blog/StyleGuide.md v0.1 — palette: warm-black, parchment, sun-orange, gold, reserved rose-pink; mood: warm, sovereign, contemplative, lived-in; composition: asymmetric, one subject + one supporting element + ground, at least 40% negative space; avoid: generic AI gloss, corporate stock, synthwave neon, pure-white startup style, literal Kene tracing.
+
+A small brass security key and a handwritten systems diagram on dark paper, a single sun-orange line connecting nodes like a quiet circuit, composition off-center with the key in the right third and empty warm-black ground for headline overlay,
+in the dyallo.se visual style:
+  palette: warm-black ground (#0F0B0A) with sun-orange (#E0531C) and gold (#D6A85F) accents,
+           parchment ink (#F2EADB); off-palette neutrals permitted only as natural detail;
+           NO forest green, NO pure white, NO pure black.
+  mood: warm, sovereign, contemplative; lit from one warm direction; lived-in, hand-touched;
+        quiet exuberance — one focal element earns the strongest color.
+  texture: slight grain or paper noise; soft on organic forms, crisp on geometric ornament;
+           NO drop shadows, NO glassmorphism, NO neon glow.
+  composition: asymmetric, one subject + one supporting element + ground, ≥40% negative space.
+  avoid: generic AI gloss, corporate stock aesthetic, synthwave neon, lotus/mandala/third-eye
+         spiritual stereotypes, literal Kene pattern tracing.
+format: Hero register page, 3:2 aspect ratio per StyleGuide §8, 1800 × 1200 target.

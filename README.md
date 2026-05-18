@@ -56,6 +56,43 @@ draft: false
 
 The `slug` field determines the URL (`/blog/url-slug`), not the filename.
 
+Obsidian-style wikilinks are supported in post markdown. Known internal routes render as links, for example `[[About]]`; unknown pages render as plain text.
+
+## Site Sections
+
+Phase 2 fills the Convergence Node register pages:
+
+- `/about` — long-form four-register narrative
+- `/now` — dated snapshot across building, music, practice, reading, and curiosities
+- `/coaching` — Zen coaching service page with inquiry CTA
+- `/dev` — engineering positioning and project highlights
+- `/music` — Moonkin, Echological roster, fire arts, and flow community
+- `/projects` — case-study index for dyallo.se, PAI, and Echological
+
+## Open Graph Images
+
+Blog posts get deterministic generated share images at `/og/<slug>.png`. The Astro build uses Satori plus a local TTF font and Sharp to create 1200 × 630 PNGs with the post title, date, dyallo.se wordmark, and Rupicola signature mark.
+
+## Newsletter
+
+The subscribe form posts to Buttondown's embedded endpoint for the `dyallo` newsletter:
+
+```text
+https://buttondown.email/api/emails/embed-subscribe/dyallo
+```
+
+RSS-to-email setup is documented in [`docs/buttondown-rss-setup.md`](docs/buttondown-rss-setup.md). Dennis still needs to verify the full live flow with a real email address and the Buttondown dashboard.
+
+## Imagery Prompt Workflow
+
+No AI-generated imagery is committed in this repo. Phase 2 only authors prompt files in `docs/imagery-prompts/`, each citing the StyleGuide gate at:
+
+```text
+~/Documents/Sunthings_AppStorage_EU_e2e/Projects/Dyallo Blog/StyleGuide.md
+```
+
+After Dennis reviews StyleGuide v1.0, image generation happens separately through PAI `/Art`.
+
 ## Deployment
 
 The site is hosted on a VPS via **Docker + Caddy**, served as static files.

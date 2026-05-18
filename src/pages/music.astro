@@ -1,43 +1,68 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const artists = [
+  ['Hazayana Collective', 'Tribal Fusion & Sacred Bass, France', 'https://echological.fm/hazaaheli/en/'],
+  ['Naomi Runa', 'Progressive Soul & Conscious Hip-Hop, Stockholm', 'https://echological.fm/naomiruna/'],
+  ['Andreas Lång', 'Visblues & Swedish roots, Stockholm', 'https://echological.fm/andreaslang/'],
+  ['Sophie von Matern', 'Medicine Music & Ethno-Soul, Sweden', 'https://echological.fm/sophievonmatern/'],
+  ['Felicia Falck', 'Nordic Folk & Vispop, Bohuslän', 'https://echological.fm/feliciafalck'],
+];
 ---
 
-<BaseLayout title="Music" description="Artist management, DJ performances, and flow arts community.">
-  <div class="container">
-    <h1>Music</h1>
-    <div class="content">
-      <p>
-        Managing performing artists via Echological. DJ performances as Moonkin.
-        Founded Stockholm Flow, Scandinavia's largest flow arts community.
-      </p>
-      <p>
-        <em>Full artist roster, embedded mixes, and show calendar coming in Phase 2.</em>
-      </p>
-    </div>
-  </div>
+<BaseLayout title="Music" description="Moonkin, Echological artist management, fire arts, and flow community.">
+  <main class="container">
+    <header class="page-header">
+      <p class="eyebrow">Music</p>
+      <h1>Performance, artist infrastructure, and rooms where people remember their body.</h1>
+      <p>I spent a decade on the stage-side of the equation: DJing electronic and psychedelic music as Moonkin, performing fire shows, and building flow arts community. That experience now informs how I represent artists through Echological.</p>
+    </header>
+
+    <section>
+      <h2>Moonkin</h2>
+      <p>Moonkin is my DJ name for electronic and psychedelic sets shaped around movement, atmosphere, and the long arc of a room. It belongs to the same practice as everything else here: listen carefully, build the container, let the system breathe.</p>
+      <div class="embed-placeholder">
+        <p>Mix embed pending. Public Mixcloud or SoundCloud account was not confidently identified during Phase 2, so this stays as a code-visible TODO until Dennis confirms the canonical player URL.</p>
+        <!-- TODO: Replace with Dennis-confirmed Mixcloud or SoundCloud iframe for Moonkin. -->
+      </div>
+    </section>
+    <section>
+      <h2>Echological Roster</h2>
+      <div class="artist-grid">
+        {artists.map(([name, description, href]) => (
+          <a class="artist-card" href={href} target="_blank" rel="noopener">
+            <h3>{name}</h3>
+            <p>{description}</p>
+            <span>echological.fm ↗</span>
+          </a>
+        ))}
+      </div>
+    </section>
+    <section>
+      <h2>Management</h2>
+      <p>Echological exists for artists who operate between tradition and contemporary expression. The work is booking, EPKs, narrative, production context, and the subtle translation between an artist's signal and the systems that can carry it.</p>
+    </section>
+    <section>
+      <h2>Fire Arts And Flow</h2>
+      <p>Before management became the center of the music register, I performed fire shows and founded Stockholm Flow, Scandinavia's largest flow arts community. That lineage still matters: craft is learned in the body before it becomes strategy.</p>
+    </section>
+  </main>
 
   <style>
-    .container {
-      max-width: var(--reading-width);
-      margin: 0 auto;
-      padding: var(--space-2xl) var(--space-lg);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-xl);
-    }
-
-    .content p {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      margin-bottom: var(--space-lg);
-      color: var(--muted);
-    }
-
-    .content em {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .container { max-width: 960px; margin: 0 auto; padding: var(--space-3xl) var(--space-lg); }
+    .page-header { max-width: 760px; margin-bottom: var(--space-2xl); }
+    .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+    h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
+    h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
+    h3 { font-size: var(--type-h5); margin-bottom: var(--space-xs); }
+    p { color: var(--muted); line-height: 1.65; }
+    section { padding: var(--space-xl) 0; border-bottom: 1px solid var(--border); }
+    .artist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-md); }
+    .artist-card, .embed-placeholder { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-lg); }
+    .artist-card { color: inherit; transition: border-color var(--transition-normal), transform var(--transition-fast); }
+    .artist-card:hover { border-color: var(--primary); transform: translateY(-2px); opacity: 1; }
+    .artist-card span { display: inline-block; margin-top: var(--space-md); color: var(--primary); font-size: var(--type-small); }
+    .embed-placeholder { margin-top: var(--space-lg); border-style: dashed; }
+    @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
   </style>
 </BaseLayout>

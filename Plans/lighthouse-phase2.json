@@ -1,0 +1,13 @@
+{
+  "status": "blocked",
+  "tool": "lighthouse",
+  "target": "http://localhost:4321/blog/hello-blog",
+  "reason": "The local sandbox rejected every preview server bind attempt with listen EPERM on ::1:4321, 127.0.0.1:4321, and 0.0.0.0:5199. Lighthouse was not run because there was no local HTTP server to audit.",
+  "build": "bun run build exited 0 on 2026-05-18",
+  "scores": {
+    "performance": null,
+    "accessibility": null,
+    "best-practices": null,
+    "seo": null
+  }
+}
