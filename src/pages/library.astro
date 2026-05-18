@@ -3,6 +3,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 const pageTitle = 'Library';
 const pageDescription = 'Books and influences that shaped my thinking across sovereignty, systems, inner work, and practice.';
+
+const recentlyFinished = [
+  { title: 'The Diamond Approach', author: 'A.H. Almaas' },
+  { title: 'Nonviolent Communication', author: 'Marshall Rosenberg' },
+  { title: 'Die With Zero', author: 'Bill Perkins' },
+  { title: 'Never Split the Difference', author: 'Chris Voss & Tahl Raz' },
+  { title: 'Odyssey: Stephen Fry’s Greek Myths, Book 4', author: 'Stephen Fry' },
+  { title: 'The Anatomy of the State', author: 'Murray N. Rothbard' },
+  { title: 'Living from a Place of Surrender', author: 'Michael Singer' },
+  { title: 'The Untethered Soul', author: 'Michael A. Singer' },
+  { title: 'Life 3.0: Being Human in the Age of Artificial Intelligence', author: 'Max Tegmark' },
+  { title: 'Algorithms to Live By', author: 'Brian Christian & Tom Griffiths' },
+  { title: 'The Way of the Superior Man', author: 'David Deida' },
+  { title: 'The Pragmatic Programmer (20th Anniversary Edition)', author: 'David Thomas & Andrew Hunt' },
+  { title: 'The Price of Tomorrow', author: 'Jeff Booth' },
+  { title: 'Principles: Life and Work', author: 'Ray Dalio' },
+  { title: 'Homo Deus', author: 'Yuval Noah Harari' },
+  { title: 'The Gulag Archipelago', author: 'Aleksandr Solzhenitsyn' },
+];
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
@@ -16,16 +35,15 @@ const pageDescription = 'Books and influences that shaped my thinking across sov
     </header>
 
     <div class="library-content">
-      <!-- Currently Reading -->
-      <section class="reading-section currently-reading">
-        <h2>Currently Reading</h2>
-        <div class="book-list">
-          <div class="book">
-            <h3><!-- TODO: Dennis to fill --></h3>
-            <p class="author"><!-- TODO: Dennis to fill --></p>
-            <p class="takeaway"><!-- TODO: Dennis to fill --></p>
-          </div>
-        </div>
+      <!-- Recently Finished -->
+      <section class="reading-section recently-finished">
+        <h2>Recently Finished</h2>
+        <p class="section-intro">A rolling list of the most recent books I closed. The curated categories below are the deeper set — the texts I return to.</p>
+        <ul class="finished-list">
+          {recentlyFinished.map((b) => (
+            <li><span class="book-title">{b.title}</span> &mdash; <span class="book-author">{b.author}</span></li>
+          ))}
+        </ul>
       </section>
 
       <!-- Engineering -->
@@ -231,16 +249,19 @@ const pageDescription = 'Books and influences that shaped my thinking across sov
       color: var(--primary);
     }
 
-    .currently-reading {
+    .recently-finished {
       background: var(--surface);
       padding: var(--space-lg);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
     }
-
-    .currently-reading h2 {
-      margin-top: 0;
-    }
+    .recently-finished h2 { margin-top: 0; }
+    .section-intro { color: var(--muted); font-size: var(--type-small); margin-bottom: var(--space-md); }
+    .finished-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-xs); }
+    .finished-list li { color: var(--ink); font-size: 0.95rem; line-height: 1.55; padding: 0.2rem 0; border-bottom: 1px solid var(--border); }
+    .finished-list li:last-child { border-bottom: 0; }
+    .book-title { font-family: var(--font-serif); }
+    .book-author { color: var(--muted); }
 
     .book-list {
       display: flex;
