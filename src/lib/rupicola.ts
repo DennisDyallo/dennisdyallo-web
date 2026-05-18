@@ -3,5 +3,5 @@ export const rupicolaSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"
 export function getRupicolaDataUri(color = '#E0531C'): string {
   const colored = rupicolaSvg.replace(/currentColor/g, color);
   const b64 = Buffer.from(colored, 'utf8').toString('base64');
-  return ;
+  return `data:image/svg+xml;base64,${b64}`;
 }
