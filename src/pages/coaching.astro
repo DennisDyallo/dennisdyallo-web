@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import StepPattern from '../components/ornament/StepPattern.astro';
+import ArcBracket from '../components/ornament/ArcBracket.astro';
 ---
 
 <BaseLayout title="Coaching" description="Zen coaching, meditation facilitation, and grounded inner work.">
@@ -10,35 +11,42 @@ import StepPattern from '../components/ornament/StepPattern.astro';
     </figure>
 
     <section class="hero">
-      <p class="eyebrow">Coaching</p>
+      <p class="eyebrow">Zen Coaching Session</p>
       <h1>Grounded inquiry for people who are done performing clarity.</h1>
-      <p>Zen coaching, meditation practice, men's circles, and retreats have taught me the same thing: people rarely need another framework before they need a clean mirror.</p>
-      <a class="cta" href="mailto:dennis@dyallo.se?subject=Zen%20Coaching%20Inquiry">Ask about a session</a>
+      <p class="lede">This is a reservation for an inquiry session, with a total session length of 60 minutes.</p>
+      <div class="cta-group">
+        <a class="cta cta-primary" href="mailto:dennis@dyallo.se?subject=Zen%20Coaching%20Session%20%E2%80%94%20Reservation">Reserve a session</a>
+        <a class="cta cta-secondary" href="mailto:dennis@dyallo.se?subject=Free%2015-min%20Screening%20Call">First-time? Book a free 15-min screening call</a>
+      </div>
     </section>
 
     <div class="sections">
       <section>
+        <h2>What it is</h2>
+        <p>Collaborative dialogue exploring how stories live in your body. We move from understanding to embodied awareness to capable action. You already have what you need — we create space to access it.</p>
+        <p>Each session begins with grounding meditation and invitation to speak from the heart — slowly enough to feel your words land.</p>
+      </section>
+
+      <div class="pullquote" aria-hidden="false">
+        <ArcBracket />
+        <blockquote>These sessions are about <em>knocking the door</em>, not complete therapeutic arcs.</blockquote>
+        <p class="pullquote-note">Integration support and follow-up available.</p>
+      </div>
+
+      <section>
         <h2>Who This Is For</h2>
-        <p>This is for people navigating change, creative blocks, relational friction, spiritual bypassing, or the quiet sense that the old operating system is no longer honest.</p>
+        <p>People navigating change, creative blocks, relational friction, spiritual bypassing, or the quiet sense that the old operating system is no longer honest.</p>
         <p>It fits best if you want directness without theater: no guru posture, no productivity cosplay, no promise that one session will turn your life into a diagram.</p>
       </section>
-      <section>
-        <h2>What A Session Looks Like</h2>
-        <p>We start with what is actually alive. Not the polished story, the thing underneath it. From there we slow down enough to see what the body, language, and attention are already revealing.</p>
-        <p>Sessions may include inquiry, silence, somatic tracking, meditation context, practical next steps, or simply staying with the part of the truth that has not had enough room.</p>
-      </section>
+
+      <div class="mid-ornament" aria-hidden="true"><StepPattern /></div>
+
       <section>
         <h2>Training And Approach</h2>
         <p>I am a certified Zen Coach with practice roots in Vipassana meditation, yoga, contemplative traditions, men's circles, movement work, and retreat facilitation.</p>
         <p>The approach is warm and direct. Less guru, more honest mirror. I care about sovereignty: helping you return to your own seeing instead of becoming dependent on mine.</p>
       </section>
-      <div class="mid-ornament" aria-hidden="true"><StepPattern /></div>
 
-      <section>
-        <h2>Pricing</h2>
-        <p>By inquiry — sessions start at [TBD] SEK.</p>
-        <p>Dennis will replace this placeholder with the final pricing and booking system once the offer is ready for public traffic.</p>
-      </section>
       <section>
         <h2>FAQs</h2>
         <div class="faq">
@@ -47,9 +55,12 @@ import StepPattern from '../components/ornament/StepPattern.astro';
           <h3>Do I need meditation experience?</h3>
           <p>No. A willingness to pay attention honestly is more important than any formal practice history.</p>
           <h3>Can sessions be remote?</h3>
-          <p>Yes. Remote sessions are the default placeholder for now; in-person work can be discussed when geography and context make sense.</p>
+          <p>Yes. Remote sessions are the default; in-person work can be discussed when geography and context make sense.</p>
+          <h3>How long is a session?</h3>
+          <p>60 minutes. Free 15-min screening call available for first-time clients to find your fit.</p>
         </div>
       </section>
+
       <section>
         <h2>Contact</h2>
         <p>Email <a href="mailto:dennis@dyallo.se">dennis@dyallo.se</a> with a few lines about what you are navigating and what made you reach out now.</p>
@@ -63,7 +74,17 @@ import StepPattern from '../components/ornament/StepPattern.astro';
     .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
     h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
     .hero p, section p { color: var(--muted); line-height: 1.65; }
-    .cta { display: inline-flex; margin-top: var(--space-lg); padding: var(--space-sm) var(--space-lg); background: var(--primary); color: var(--bg); border-radius: var(--radius-sm); font-weight: 600; }
+    .lede { font-family: var(--font-serif); font-size: 1.12rem; color: var(--ink); margin-bottom: var(--space-lg); }
+    .cta-group { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: center; margin-top: var(--space-md); }
+    .cta { display: inline-flex; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-sm); text-decoration: none; transition: opacity var(--transition-fast), background var(--transition-fast); }
+    .cta-primary { background: var(--primary); color: var(--bg); font-weight: 600; }
+    .cta-primary:hover { opacity: 0.88; }
+    .cta-secondary { color: var(--muted); border: 1px solid var(--border); font-size: var(--type-small); padding: 0.45rem 0.85rem; }
+    .cta-secondary:hover { border-color: var(--primary); color: var(--ink); }
+    .pullquote { margin: var(--space-2xl) auto; max-width: 640px; display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); color: var(--gold); text-align: center; }
+    .pullquote blockquote { font-family: var(--font-serif); font-size: 1.4rem; line-height: 1.5; color: var(--ink); margin: 0; }
+    .pullquote blockquote em { color: var(--primary); font-style: italic; }
+    .pullquote-note { color: var(--muted); font-size: var(--type-small); margin: 0; }
     .sections { display: grid; gap: var(--space-xl); }
     section:not(.hero) { padding-bottom: var(--space-xl); border-bottom: 1px solid var(--border); }
     h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
