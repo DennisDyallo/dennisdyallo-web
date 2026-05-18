@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SubscribeForm from '../../components/SubscribeForm.astro';
 import { getCollection, render } from 'astro:content';
+import DotSequence from '../../components/ornament/DotSequence.astro';
 
 export async function getStaticPaths() {
   const allPosts = await getCollection('blog');
@@ -69,6 +70,10 @@ const articleJsonLd = {
         <Content />
       </div>
 
+      <div class="post-end-ornament" aria-hidden="true">
+        <DotSequence />
+      </div>
+
       <footer class="post-footer">
         <div class="subscribe-cta">
           <h2>Get new essays via email</h2>
@@ -80,6 +85,13 @@ const articleJsonLd = {
   </main>
 
   <style>
+    .post-end-ornament {
+      display: flex;
+      justify-content: center;
+      margin: var(--space-3xl) 0 var(--space-2xl);
+      color: var(--gold);
+    }
+
     .post {
       max-width: var(--reading-width);
       margin: 0 auto;

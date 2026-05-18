@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import TriangleChain from '../components/ornament/TriangleChain.astro';
 ---
 
 <BaseLayout title="About" description="How engineering, music, coaching, and writing became one practice.">
@@ -19,6 +20,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p>dyallo.se is built as a convergence node because the integration is the point. If you arrive through the engineering door, you should still be able to feel the music. If you arrive through coaching, the systems thinking should be visible. If you arrive through an artist, the concern for sovereignty should not be abstract. The registers are different instruments, but they are tuned to the same key.</p>
       <p>That key is sovereignty: the patient work of becoming harder to capture, easier to trust, and more available to what is actually here.</p>
     </div>
+    <div class="end-ornament" aria-hidden="true">
+      <TriangleChain />
+    </div>
   </main>
 
   <style>
@@ -27,6 +31,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     h1 { font-size: var(--type-h1); margin-bottom: var(--space-xl); }
     .content { font-family: var(--font-serif); font-size: 1.12rem; line-height: 1.75; }
     .content p { margin-bottom: var(--space-lg); color: var(--ink); }
+    .end-ornament { display: flex; justify-content: center; margin: var(--space-3xl) 0 var(--space-2xl); color: var(--gold); }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
   </style>
 </BaseLayout>
