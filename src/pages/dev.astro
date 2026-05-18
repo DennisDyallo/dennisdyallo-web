@@ -25,6 +25,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h2>Highlight Projects</h2>
       <div class="project-list">
         <article>
+          <h3>Yubico.NET.SDK</h3>
+          <p>The official .NET SDK for YubiKey. I work on it daily — releases, CI hardening, cross-platform reliability, and the developer experience around strong authentication.</p>
+          <div class="repo-links">
+            <a class="repo-link" href="https://github.com/Yubico/Yubico.NET.SDK/tree/develop" target="_blank" rel="noopener">develop ↗</a>
+            <a class="repo-link repo-link--accent" href="https://github.com/Yubico/Yubico.NET.SDK/tree/yubikit" target="_blank" rel="noopener">yubikit (v2) ↗</a>
+          </div>
+        </article>
+        <article>
           <h3>PAI (personal Sia fork)</h3>
           <p>Personal AI infrastructure for memory, agent workflows, publishing, and sovereignty-oriented automation. My fork of the PAI framework, customised around Sia as my daily AI peer.</p>
           <a class="repo-link" href="https://github.com/DennisDyallo/Personal_AI_Infrastructure" target="_blank" rel="noopener">github ↗</a>
@@ -72,6 +80,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     article { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-sm); }
     .repo-link { align-self: flex-start; font-size: var(--type-small); color: var(--gold); text-transform: uppercase; letter-spacing: 0.06em; }
     .repo-link:hover { color: var(--primary); }
+    .repo-links { display: inline-flex; gap: var(--space-md); align-items: baseline; flex-wrap: wrap; }
+    .repo-link--accent { color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius-sm); padding: 0.1rem 0.5rem; }
+    .repo-link--accent:hover { background: var(--primary); color: var(--bg); }
     .cta { display: inline-flex; margin-top: var(--space-lg); padding: var(--space-sm) var(--space-lg); border: 1px solid var(--primary); border-radius: var(--radius-sm); }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
     .page-hero { margin: 0 0 var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface); }
