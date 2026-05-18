@@ -1,15 +1,15 @@
 /* Design Tokens — Rupicola Editorial (Recalibrated from tattoo) */
 
 :root {
-  /* Light mode (daylight accessibility) */
-  --bg: #F7F3EC; /* parchment */
-  --surface: #FFFFFF;
-  --ink: #1C1614; /* warm near-black */
-  --muted: #6B5F55;
-  --primary: #C44A1E; /* sun-orange dialed for legibility on cream */
-  --gold: #B8894A; /* existing earth/gold preserved */
-  --accent-rose: #B0566A; /* reserved for link-hover, blockquote rules — sparing */
-  --border: #E5DDD0;
+  /* Dark mode (default — the home — warm-black world the bird flies in) */
+  --bg: #0F0B0A; /* warm-black */
+  --surface: #17120F;
+  --ink: #F2EADB; /* parchment */
+  --muted: #A89A88;
+  --primary: #E0531C; /* sun-orange-red — the bird's chest */
+  --gold: #D6A85F; /* the halo + underwing plumes */
+  --accent-rose: #C46874; /* the snake — reserved for link-hover, blockquote rules — sparing */
+  --border: #2A211C;
 
   /* Typography */
   --font-serif: 'Source Serif 4', Georgia, serif;
@@ -61,17 +61,17 @@
   --reading-width: 70ch;
 }
 
-/* Dark mode (default — the home) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0F0B0A; /* warm-black */
-    --surface: #17120F;
-    --ink: #F2EADB; /* parchment */
-    --muted: #A89A88;
-    --primary: #E0531C; /* sun-orange-red — the bird's chest */
-    --gold: #D6A85F; /* the halo + underwing plumes */
-    --accent-rose: #C46874; /* the snake */
-    --border: #2A211C;
+/* Light mode (only when user system explicitly prefers light AND no manual override) */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #F7F3EC; /* parchment */
+    --surface: #FFFFFF;
+    --ink: #1C1614; /* warm near-black */
+    --muted: #6B5F55;
+    --primary: #C44A1E; /* sun-orange dialed for legibility on cream */
+    --gold: #B8894A;
+    --accent-rose: #B0566A;
+    --border: #E5DDD0;
   }
 }
 
