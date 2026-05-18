@@ -6,6 +6,8 @@ interface Props {
   label?: string;
 }
 
+// `size` is interpreted as HEIGHT in px; width derives from SVG's natural aspect ratio (~733/1024).
+// This keeps the bird flush against its bounding box with no internal whitespace padding.
 const { size = 24, label = 'Rupicola signature mark' } = Astro.props;
 ---
 
@@ -19,15 +21,17 @@ const { size = 24, label = 'Rupicola signature mark' } = Astro.props;
 
 <style>
   .rupicola-mark {
-    display: inline-flex;
-    width: var(--mark-size);
+    display: inline-block;
     height: var(--mark-size);
+    width: auto;
     color: currentColor;
     line-height: 0;
+    vertical-align: top;
   }
 
   .rupicola-mark :global(svg) {
-    width: 100%;
+    display: block;
     height: 100%;
+    width: auto;
   }
 </style>
