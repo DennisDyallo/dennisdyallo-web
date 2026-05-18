@@ -106,7 +106,109 @@ const personJsonLd = {
     </script>
   </head>
   <body>
+    {Astro.url.pathname !== '/' && (
+      <header class="site-header">
+        <div class="site-header-inner">
+          <a href="/" class="site-home" aria-label="Back to home">
+            <span class="site-home-arrow" aria-hidden="true">←</span>
+            <span class="site-home-mark">dyallo.se</span>
+          </a>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="/about" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/about') }]}>About</a>
+            <a href="/now" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/now') }]}>Now</a>
+            <a href="/blog" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/blog') }]}>Blog</a>
+            <a href="/library" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/library') }]}>Library</a>
+            <a href="/projects" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/projects') }]}>Projects</a>
+            <button id="theme-toggle" class="nav-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+              <span class="sun" aria-hidden="true">☀</span><span class="moon" aria-hidden="true">☾</span>
+            </button>
+          </nav>
+        </div>
+      </header>
+    )}
+
     <slot />
+
+    <style is:global>
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: color-mix(in srgb, var(--bg) 92%, transparent);
+        backdrop-filter: saturate(180%) blur(10px);
+        -webkit-backdrop-filter: saturate(180%) blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .site-header-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0.7rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .site-home {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+      }
+      .site-home-arrow {
+        color: var(--primary);
+        transition: transform 0.2s ease;
+      }
+      .site-home:hover .site-home-arrow { transform: translateX(-2px); }
+      .site-home:hover .site-home-mark { color: var(--primary); }
+      .site-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 1.25rem;
+        font-family: var(--font-sans);
+        font-size: 0.88rem;
+      }
+      .nav-link {
+        color: var(--muted);
+        text-decoration: none;
+        padding: 0.2rem 0;
+        border-bottom: 1px solid transparent;
+        transition: color 0.2s, border-color 0.2s;
+      }
+      .nav-link:hover { color: var(--ink); }
+      .nav-link.active {
+        color: var(--ink);
+        border-bottom-color: var(--primary);
+      }
+      .nav-toggle {
+        background: transparent;
+        border: 1px solid var(--ink);
+        color: var(--ink);
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        line-height: 1;
+        margin-left: 0.5rem;
+      }
+      .nav-toggle:hover, .nav-toggle:focus-visible {
+        background: var(--primary);
+        color: var(--bg);
+        border-color: var(--primary);
+        outline: none;
+      }
+      [data-theme='dark'] .nav-toggle .sun { display: none; }
+      [data-theme='light'] .nav-toggle .moon { display: none; }
+      @media (max-width: 640px) {
+        .site-header-inner { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .site-nav { gap: 0.75rem; font-size: 0.82rem; }
+        .nav-link { padding: 0.15rem 0; }
+      }
+    </style>
 
     <!-- Theme toggle script -->
     <script>
