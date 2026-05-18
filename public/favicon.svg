@@ -1,0 +1,6 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rough Rupicola signature - geometric bird silhouette -->
+  <circle cx="16" cy="11" r="3" fill="#E0531C"/>
+  <path d="M10 13 L16 22 L22 13" stroke="#E0531C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M13 8 Q16 2 19 8" stroke="#E0531C" stroke-width="2" fill="none"/>
+</svg>

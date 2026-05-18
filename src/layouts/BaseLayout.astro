@@ -1,0 +1,130 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  jsonLd?: object;
+}
+
+const {
+  title = 'Dennis Dyall',
+  description = 'Developer, artist manager, and creative practitioner based in Gothenburg, Sweden.',
+  ogImage = '/og-image.jpg',
+  canonicalUrl,
+  jsonLd,
+} = Astro.props;
+
+const siteUrl = 'https://dyallo.se';
+const fullTitle = title === 'Dennis Dyall' ? title : `${title} — Dennis Dyall`;
+const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
+const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+
+// Person JSON-LD (preserved from legacy)
+const personJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Dennis Dyall',
+  jobTitle: ['Senior Software Engineer', 'Artist Manager', 'Zen Coach'],
+  worksFor: { '@type': 'Organization', name: 'Yubico' },
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Gothenburg',
+    addressCountry: 'SE',
+  },
+  url: 'https://dyallo.se',
+  sameAs: [
+    'https://github.com/DennisDyallo',
+    'https://www.linkedin.com/in/dennis-dyallo',
+    'https://www.instagram.com/ddyallo',
+    'https://www.facebook.com/ddyallo',
+    'https://echological.fm',
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="Dennis Dyall" />
+    <meta name="theme-color" content="#E0531C" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Dennis Dyall" />
+    <meta property="og:image" content={ogImageUrl} />
+
+    <!-- Twitter/X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!-- Fonts (preconnect) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Favicon (placeholder - will be replaced with Rupicola SVG) -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Person JSON-LD -->
+    <script type="application/ld+json" set:html={JSON.stringify(personJsonLd)} />
+
+    <!-- Page-specific JSON-LD -->
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
+    <!-- Umami Analytics (preserved verbatim) -->
+    <script
+      defer
+      src="https://analytics.dyallo.se/script.js"
+      data-website-id="363c559e-8df6-4db0-ac35-d5bff81d9e92"></script>
+
+    <!-- Theme script (runs before paint) -->
+    <script is:inline>
+      const getTheme = () => {
+        if (typeof localStorage !== 'undefined') {
+          const stored = localStorage.getItem('theme');
+          if (stored) return stored;
+        }
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      };
+      document.documentElement.setAttribute('data-theme', getTheme());
+    </script>
+  </head>
+  <body>
+    <slot />
+
+    <!-- Theme toggle script -->
+    <script>
+      function initThemeToggle() {
+        const toggle = document.getElementById('theme-toggle');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', () => {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+        });
+      }
+
+      // Run on load and after navigation
+      document.addEventListener('DOMContentLoaded', initThemeToggle);
+      document.addEventListener('astro:after-swap', initThemeToggle);
+    </script>
+  </body>
+</html>

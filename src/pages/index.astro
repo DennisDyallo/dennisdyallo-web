@@ -1,0 +1,358 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+// Get latest 3 blog posts
+const allPosts = await getCollection('blog');
+const posts = allPosts
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+---
+
+<BaseLayout>
+  <div class="container">
+    <!-- Theme toggle -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+      <span class="sun">☀</span>
+      <span class="moon">☾</span>
+    </button>
+
+    <!-- Hero section -->
+    <section class="hero">
+      <h1 class="hero-sentence">
+        I build systems for human sovereignty — in code, in music, in stillness, on the page.
+      </h1>
+    </section>
+
+    <!-- Four register cards -->
+    <section class="registers">
+      <a href="/dev" class="register-card">
+        <h2>Engineering</h2>
+        <p>Building scalable systems and developer tools at Yubico. TypeScript, C#, authentication infrastructure.</p>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="/music" class="register-card">
+        <h2>Music</h2>
+        <p>Artist management (Echological), DJ performances as Moonkin, flow arts community building.</p>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="/coaching" class="register-card">
+        <h2>Coaching</h2>
+        <p>Zen coaching, meditation facilitation, men's circles, and retreats for inner work.</p>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="/blog" class="register-card">
+        <h2>Writing</h2>
+        <p>Essays on sovereignty, systems thinking, macro finance, consciousness, and the practice of integration.</p>
+        <span class="arrow">→</span>
+      </a>
+    </section>
+
+    <!-- Latest blog posts -->
+    {
+      posts.length > 0 && (
+        <section class="latest-posts">
+          <h2>Latest Posts</h2>
+          <div class="posts-grid">
+            {posts.map((post) => (
+              <a href={`/blog/${post.data.slug}`} class="post-card">
+                <time datetime={post.data.pubDate.toISOString()}>
+                  {post.data.pubDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </time>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Newsletter signup -->
+    <section class="newsletter">
+      <h2>Newsletter</h2>
+      <p>Occasional essays on sovereignty, systems, and synthesis. No spam, just signal.</p>
+      <form class="newsletter-form" action="https://buttondown.email/api/emails/embed-subscribe/dyallo" method="post" target="popupwindow">
+        <input type="email" name="email" placeholder="your@email.com" required />
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="/about">About</a>
+        <span class="sep">·</span>
+        <a href="/now">Now</a>
+        <span class="sep">·</span>
+        <a href="/projects">Projects</a>
+        <span class="sep">·</span>
+        <a href="mailto:dennis@dyallo.se">Email</a>
+        <span class="sep">·</span>
+        <a href="https://github.com/dennisdyallo" target="_blank" rel="noopener">GitHub</a>
+        <span class="sep">·</span>
+        <a href="https://www.linkedin.com/in/dennis-dyallo" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+      <div class="footer-mark">
+        <!-- Rupicola signature mark placeholder -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="2" fill="currentColor"/>
+          <path d="M8 10 L12 16 L16 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 6 Q12 2 14 6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+    </footer>
+  </div>
+
+  <style>
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: var(--space-lg);
+      right: var(--space-lg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm);
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+      transition: border-color 0.2s;
+      z-index: 100;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--primary);
+    }
+
+    [data-theme='dark'] .sun {
+      display: none;
+    }
+
+    [data-theme='light'] .moon {
+      display: none;
+    }
+
+    .hero {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .hero-sentence {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      line-height: 1.3;
+      font-weight: 400;
+      max-width: 32ch;
+    }
+
+    .registers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-2xl);
+    }
+
+    .register-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.25s, transform 0.2s;
+    }
+
+    .register-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .register-card h2 {
+      font-size: 1.25rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .register-card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .register-card .arrow {
+      position: absolute;
+      bottom: var(--space-lg);
+      right: var(--space-lg);
+      color: var(--muted);
+      transition: transform 0.25s, color 0.25s;
+    }
+
+    .register-card:hover .arrow {
+      transform: translateX(4px);
+      color: var(--primary);
+    }
+
+    .latest-posts {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .latest-posts h2 {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-lg);
+    }
+
+    .posts-grid {
+      display: grid;
+      gap: var(--space-lg);
+    }
+
+    .post-card {
+      display: block;
+      padding: var(--space-lg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.25s;
+    }
+
+    .post-card:hover {
+      border-color: var(--primary);
+    }
+
+    .post-card time {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: var(--space-xs);
+    }
+
+    .post-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .post-card p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .newsletter {
+      margin-bottom: var(--space-2xl);
+      padding: var(--space-xl);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .newsletter h2 {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .newsletter p {
+      color: var(--muted);
+      margin-bottom: var(--space-lg);
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: var(--space-sm);
+      max-width: 480px;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+
+    .newsletter-form button {
+      padding: var(--space-sm) var(--space-lg);
+      background: var(--primary);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .newsletter-form button:hover {
+      opacity: 0.85;
+    }
+
+    .footer {
+      padding-top: var(--space-xl);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm) var(--space-md);
+      font-size: 0.9rem;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .footer-links .sep {
+      color: var(--border);
+    }
+
+    .footer-mark {
+      color: var(--primary);
+    }
+
+    @media (max-width: 768px) {
+      .hero-sentence {
+        font-size: 1.5rem;
+      }
+
+      .registers {
+        grid-template-columns: 1fr;
+      }
+
+      .newsletter-form {
+        flex-direction: column;
+      }
+    }
+  </style>
+</BaseLayout>

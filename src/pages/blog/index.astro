@@ -1,0 +1,195 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog');
+const posts = allPosts
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout
+  title="Blog"
+  description="Essays on sovereignty, systems thinking, and synthesis."
+>
+  <div class="container">
+    <header class="blog-header">
+      <h1>Writing</h1>
+      <p>Essays on sovereignty, systems, consciousness, and the integration of all four registers.</p>
+    </header>
+
+    <div class="posts-list">
+      {
+        posts.map((post) => (
+          <article class="post-item">
+            <time datetime={post.data.pubDate.toISOString()}>
+              {post.data.pubDate.toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </time>
+            <h2>
+              <a href={`/blog/${post.data.slug}`}>{post.data.title}</a>
+            </h2>
+            <p>{post.data.description}</p>
+            {post.data.tags.length > 0 && (
+              <div class="tags">
+                {post.data.tags.map((tag) => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </div>
+            )}
+          </article>
+        ))
+      }
+    </div>
+
+    <!-- Newsletter signup -->
+    <section class="newsletter">
+      <h2>Subscribe</h2>
+      <p>Get new essays via email. No spam, just signal.</p>
+      <form class="newsletter-form" action="https://buttondown.email/api/emails/embed-subscribe/dyallo" method="post" target="popupwindow">
+        <input type="email" name="email" placeholder="your@email.com" required />
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
+  </div>
+
+  <style>
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .blog-header {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .blog-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .blog-header p {
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .posts-list {
+      display: grid;
+      gap: var(--space-2xl);
+      margin-bottom: var(--space-2xl);
+    }
+
+    .post-item {
+      padding-bottom: var(--space-xl);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .post-item:last-child {
+      border-bottom: none;
+    }
+
+    .post-item time {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: var(--space-sm);
+    }
+
+    .post-item h2 {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .post-item h2 a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .post-item h2 a:hover {
+      color: var(--primary);
+    }
+
+    .post-item p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: var(--space-md);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+    }
+
+    .newsletter {
+      padding: var(--space-xl);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .newsletter h2 {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .newsletter p {
+      color: var(--muted);
+      margin-bottom: var(--space-lg);
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: var(--space-sm);
+      max-width: 100%;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+
+    .newsletter-form button {
+      padding: var(--space-sm) var(--space-lg);
+      background: var(--primary);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .newsletter-form button:hover {
+      opacity: 0.85;
+    }
+
+    @media (max-width: 768px) {
+      .newsletter-form {
+        flex-direction: column;
+      }
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Music" description="Artist management, DJ performances, and flow arts community.">
+  <div class="container">
+    <h1>Music</h1>
+    <div class="content">
+      <p>
+        Managing performing artists via Echological. DJ performances as Moonkin.
+        Founded Stockholm Flow, Scandinavia's largest flow arts community.
+      </p>
+      <p>
+        <em>Full artist roster, embedded mixes, and show calendar coming in Phase 2.</em>
+      </p>
+    </div>
+  </div>
+
+  <style>
+    .container {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-xl);
+    }
+
+    .content p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-bottom: var(--space-lg);
+      color: var(--muted);
+    }
+
+    .content em {
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</BaseLayout>

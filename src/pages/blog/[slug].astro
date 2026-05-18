@@ -1,0 +1,287 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog');
+  return allPosts
+    .filter((post) => !post.data.draft)
+    .map((post) => ({
+      params: { slug: post.data.slug },
+      props: { entry: post },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+// JSON-LD Article schema
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: entry.data.title,
+  description: entry.data.description,
+  datePublished: entry.data.pubDate.toISOString(),
+  ...(entry.data.updatedDate && { dateModified: entry.data.updatedDate.toISOString() }),
+  author: {
+    '@type': 'Person',
+    name: 'Dennis Dyall',
+  },
+  image: entry.data.ogImage || `/og-image.jpg`,
+};
+
+const ogImage = entry.data.ogImage || `/og-image.jpg`;
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  ogImage={ogImage}
+  canonicalUrl={entry.data.canonicalUrl}
+  jsonLd={articleJsonLd}
+>
+  <article class="post">
+    <header class="post-header">
+      <a href="/blog" class="back-link">← All Posts</a>
+      <time datetime={entry.data.pubDate.toISOString()}>
+        {
+          entry.data.pubDate.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        }
+      </time>
+      <h1>{entry.data.title}</h1>
+      {
+        entry.data.tags.length > 0 && (
+          <div class="tags">
+            {entry.data.tags.map((tag) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    <div class="post-content">
+      <Content />
+    </div>
+
+    <footer class="post-footer">
+      <div class="subscribe-cta">
+        <h3>Get new essays via email</h3>
+        <p>No spam, just signal.</p>
+        <form class="newsletter-form" action="https://buttondown.email/api/emails/embed-subscribe/dyallo" method="post" target="popupwindow">
+          <input type="email" name="email" placeholder="your@email.com" required />
+          <button type="submit">Subscribe</button>
+        </form>
+      </div>
+    </footer>
+  </article>
+
+  <style>
+    .post {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .post-header {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .back-link {
+      display: inline-block;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: var(--space-md);
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--primary);
+    }
+
+    .post-header time {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: var(--space-sm);
+    }
+
+    .post-header h1 {
+      font-size: 2.5rem;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+    }
+
+    .post-content {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: var(--ink);
+    }
+
+    /* Drop cap on first paragraph */
+    .post-content :global(> p:first-of-type::first-letter) {
+      font-size: 3.5em;
+      line-height: 0.9;
+      float: left;
+      margin: 0.05em 0.1em 0 0;
+      font-weight: 400;
+      color: var(--primary);
+    }
+
+    .post-content :global(h2) {
+      font-size: 1.75rem;
+      margin-top: var(--space-2xl);
+      margin-bottom: var(--space-md);
+    }
+
+    .post-content :global(h3) {
+      font-size: 1.4rem;
+      margin-top: var(--space-xl);
+      margin-bottom: var(--space-sm);
+    }
+
+    .post-content :global(p) {
+      margin-bottom: var(--space-lg);
+    }
+
+    .post-content :global(a) {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      transition: color 0.2s;
+    }
+
+    .post-content :global(a:hover) {
+      color: var(--accent-rose);
+    }
+
+    .post-content :global(blockquote) {
+      margin: var(--space-xl) 0;
+      padding-left: var(--space-lg);
+      border-left: 3px solid var(--accent-rose);
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .post-content :global(code) {
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+      background: var(--surface);
+      padding: 0.2em 0.4em;
+      border-radius: var(--radius-sm);
+    }
+
+    .post-content :global(pre) {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      overflow-x: auto;
+      margin: var(--space-xl) 0;
+    }
+
+    .post-content :global(pre code) {
+      background: none;
+      padding: 0;
+    }
+
+    .post-content :global(ul),
+    .post-content :global(ol) {
+      margin: var(--space-lg) 0;
+      padding-left: var(--space-xl);
+    }
+
+    .post-content :global(li) {
+      margin-bottom: var(--space-sm);
+    }
+
+    .post-footer {
+      margin-top: var(--space-2xl);
+      padding-top: var(--space-2xl);
+      border-top: 1px solid var(--border);
+    }
+
+    .subscribe-cta {
+      padding: var(--space-xl);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .subscribe-cta h3 {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .subscribe-cta p {
+      color: var(--muted);
+      margin-bottom: var(--space-lg);
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: var(--space-sm);
+      max-width: 100%;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+
+    .newsletter-form button {
+      padding: var(--space-sm) var(--space-lg);
+      background: var(--primary);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .newsletter-form button:hover {
+      opacity: 0.85;
+    }
+
+    @media (max-width: 768px) {
+      .post-header h1 {
+        font-size: 2rem;
+      }
+
+      .newsletter-form {
+        flex-direction: column;
+      }
+    }
+  </style>
+</BaseLayout>

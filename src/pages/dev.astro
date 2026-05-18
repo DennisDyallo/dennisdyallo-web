@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Engineering" description="Building authentication infrastructure and developer tools at Yubico.">
+  <div class="container">
+    <h1>Engineering</h1>
+    <div class="content">
+      <p>
+        Senior Software Engineer at Yubico. Building cross-platform authentication SDKs,
+        CI/CD security hardening, and developer tooling. TypeScript, C#, distributed systems.
+      </p>
+      <p>
+        <em>Full portfolio and case studies coming in Phase 2.</em>
+      </p>
+    </div>
+  </div>
+
+  <style>
+    .container {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-xl);
+    }
+
+    .content p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-bottom: var(--space-lg);
+      color: var(--muted);
+    }
+
+    .content em {
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</BaseLayout>

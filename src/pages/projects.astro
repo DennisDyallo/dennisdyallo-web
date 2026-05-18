@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Projects" description="Case studies and built systems.">
+  <div class="container">
+    <h1>Projects</h1>
+    <div class="content">
+      <p>
+        Selected work: Yubico SDK development, PAI infrastructure, Echological artist platform,
+        Skattata bookkeeping CLI, and this site itself.
+      </p>
+      <p>
+        <em>Full case studies coming in Phase 2.</em>
+      </p>
+    </div>
+  </div>
+
+  <style>
+    .container {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-xl);
+    }
+
+    .content p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-bottom: var(--space-lg);
+      color: var(--muted);
+    }
+
+    .content em {
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</BaseLayout>
