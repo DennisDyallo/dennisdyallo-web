@@ -66,5 +66,8 @@ const cases = [
     dt { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.06em; }
     dd { color: var(--muted); line-height: 1.6; }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } dl { grid-template-columns: 1fr; gap: var(--space-xs); } dd { margin-bottom: var(--space-sm); } }
+    .page-hero { margin: 0 0 var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface); }
+    .page-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
   </style>
 </BaseLayout>
