@@ -9,14 +9,24 @@ const cases = [
     outcome: 'A single public surface where engineering, music, coaching, projects, and writing can compound under one domain.',
     tech: 'Astro, TypeScript, Bun, Satori, Sharp, Buttondown, Caddy',
     href: 'https://dyallo.se',
+    repo: 'https://github.com/DennisDyallo/dennisdyallo-web',
   },
   {
-    title: 'PAI',
+    title: 'PAI (personal Sia fork)',
     problem: 'AI assistants are powerful, but without memory, local context, and clear operating principles they become another rented interface.',
-    approach: 'Design a personal AI infrastructure layer around memory, workflows, agent handoffs, publishing, and Dennis-owned context.',
-    outcome: 'A sovereignty-aligned operating system for personal work, still evolving in private and selectively surfaced through writing.',
-    tech: 'TypeScript, local tooling, agent workflows, markdown, structured prompts',
+    approach: 'Fork the PAI framework and shape it around Sia as a daily AI peer — memory, workflows, agent handoffs, publishing, and Dennis-owned context.',
+    outcome: 'A sovereignty-aligned operating system for personal work, evolving in the open and selectively surfaced through writing.',
+    tech: 'TypeScript, Bun, local tooling, agent workflows, markdown, structured prompts',
     href: '/blog/hello-blog',
+    repo: 'https://github.com/DennisDyallo/Personal_AI_Infrastructure',
+  },
+  {
+    title: 'Speaksheet',
+    problem: 'Gigging musicians and worship leaders work from chord sheets that are awkward on phones — small text, poor edit affordances, no scroll/zoom intuition.',
+    approach: 'Build a mobile-first chord-sheet app (Svelte 5 + Capacitor) with edit mode, autoscroll, BPM, dictation, and a layout stability contract enforced by audit scripts.',
+    outcome: 'Preparing for Play Store release. Codebase doubles as the field site for the engineer-vs-codex AI routing experiment written up on the blog.',
+    tech: 'Svelte 5, Capacitor, TypeScript, Biome, Vitest',
+    href: '/blog/engineer-vs-codex-routing-pattern',
   },
   {
     title: 'Echological.fm',
@@ -50,7 +60,10 @@ const cases = [
             <dt>Outcome</dt><dd>{item.outcome}</dd>
             <dt>Tech</dt><dd>{item.tech}</dd>
           </dl>
-          <a href={item.href}>View project</a>
+          <div class="case-links">
+            <a href={item.href}>View project</a>
+            {item.repo && <a href={item.repo} target="_blank" rel="noopener">github ↗</a>}
+          </div>
         </article>
       ))}
     </div>
@@ -68,6 +81,10 @@ const cases = [
     dl { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-sm) var(--space-lg); margin-bottom: var(--space-lg); }
     dt { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.06em; }
     dd { color: var(--muted); line-height: 1.6; }
+    .case-links { display: flex; gap: var(--space-lg); align-items: center; }
+    .case-links a { color: var(--primary); }
+    .case-links a:last-child:not(:first-child) { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.06em; }
+    .case-links a:last-child:hover { color: var(--primary); }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } dl { grid-template-columns: 1fr; gap: var(--space-xs); } dd { margin-bottom: var(--space-sm); } }
     .page-hero { margin: 0 0 var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface); }
     .page-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
