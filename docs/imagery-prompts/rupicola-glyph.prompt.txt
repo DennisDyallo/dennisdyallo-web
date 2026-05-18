@@ -1,0 +1,35 @@
+# Rupicola signature glyph
+# Cites StyleGuide.md v1.0 (Projects/Dyallo Blog/StyleGuide.md)
+# Aspect: 1:1 square (1024×1024 source, will be downscaled to 256×256 SVG conversion source, used at favicon 64×64 and footer 24px)
+# Use: site signature mark — favicon, footer glyph, OG image corner embed
+# Output target: PNG with transparent or warm-black background
+# Post-processing: human will vectorize the result to SVG for the actual favicon
+
+A minimal flat-design silhouette of a Guianan Cock-of-the-Rock (Rupicola rupicola) perched in profile, facing right.
+
+CRITICAL identifying feature: the bird's iconic fan-shaped semicircular disc crest covering the top of its head and partially obscuring the beak — this disc crest is the bird's defining trait and must be the dominant feature of the silhouette.
+
+Pose: compact perched body, plump rounded chest, short tail tucked, sitting on a single horizontal line (perch).
+
+STYLE — strict, in the dyallo.se visual style (StyleGuide.md v1.0):
+- ONE solid fill color: sun-orange-red #E0531C (the bird's chest color from the tattoo source)
+- Background: solid warm-black #0F0B0A
+- ZERO interior detail — no eyes, no feather lines, no beak split, no shading, no gradients, no highlights, no shadows
+- ZERO outline or stroke — single solid filled silhouette only
+- Flat 2D vector aesthetic (think pictogram, road-sign, brand mark — NOT illustration)
+- Centered in frame with ≥40% negative space around the figure
+- Recognizable as a Rupicola at favicon size (24px) when downscaled
+
+PALETTE per StyleGuide.md §1: warm-black ground (#0F0B0A) with sun-orange (#E0531C) — no other colors permitted. Off-palette neutrals explicitly forbidden. NO forest green, NO pure white, NO pure black.
+
+MOOD per StyleGuide.md §2: warm, sovereign, restrained. Quiet exuberance — one focal element (the bird) earns the strongest color. The disc crest reads as a sun-halo at small sizes (which is intentional — references the bird's natural sun-around-the-head appearance in the source tattoo).
+
+COMPOSITION per StyleGuide.md §4: bird centered, asymmetric crest reading right-of-center, ≥40% negative warm-black around figure.
+
+TEXTURE per StyleGuide.md §5: ZERO grain, ZERO noise, ZERO texture — this is a vector-bound glyph, must be perfectly flat for clean vectorization.
+
+AVOID list per StyleGuide.md §6: NO photorealism, NO 3D rendering, NO glow, NO drop shadow, NO gradient, NO outline, NO multiple colors, NO interior detail, NO decorative ornament around the figure, NO text, NO frame, NO badge background, NO mascot cuteness, NO cartoon eye, NO open beak.
+
+REFERENCE: the bird is the same species Dennis has tattooed on his upper arm — a striking orange-red bird with a prominent fan-shaped head crest, native to the Guiana Shield rainforests.
+
+Format: 1024×1024 PNG. Single subject. Pictogram aesthetic. Brand mark quality.
