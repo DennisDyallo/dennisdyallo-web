@@ -14,12 +14,6 @@ const posts = allPosts
 
 <BaseLayout>
   <div class="container">
-    <!-- Theme toggle -->
-    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
-      <span class="sun">☀</span>
-      <span class="moon">☾</span>
-    </button>
-
     <main>
       <!-- Hero section -->
       <section class="hero">
@@ -104,8 +98,14 @@ const posts = allPosts
         <span class="sep">·</span>
         <a href="https://www.linkedin.com/in/dennis-dyallo" target="_blank" rel="noopener">LinkedIn</a>
       </div>
-      <div class="footer-mark">
-        <RupicolaMark />
+      <div class="footer-controls">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+          <span class="sun" aria-hidden="true">☀</span>
+          <span class="moon" aria-hidden="true">☾</span>
+        </button>
+        <div class="footer-mark" aria-hidden="true">
+          <RupicolaMark />
+        </div>
       </div>
     </footer>
   </div>
@@ -118,22 +118,32 @@ const posts = allPosts
     }
 
     .theme-toggle {
-      position: fixed;
-      top: var(--space-lg);
-      right: var(--space-lg);
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: transparent;
+      border: 1px solid var(--ink);
+      color: var(--ink);
       border-radius: var(--radius-md);
-      padding: var(--space-sm);
+      padding: 0.4rem 0.7rem;
       cursor: pointer;
-      font-size: 1.25rem;
+      font-size: 1.05rem;
       line-height: 1;
-      transition: border-color 0.2s;
-      z-index: 100;
+      transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
-    .theme-toggle:hover {
+    .theme-toggle:hover,
+    .theme-toggle:focus-visible {
+      background: var(--primary);
+      color: var(--bg);
       border-color: var(--primary);
+      outline: none;
+    }
+
+    .footer-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-md);
     }
 
     [data-theme='dark'] .sun {
@@ -314,8 +324,21 @@ const posts = allPosts
         grid-template-columns: 1fr;
       }
 
+      .newsletter {
+        padding: var(--space-lg);
+      }
+
       .newsletter :global(.newsletter-form) {
         flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+      }
+
+      .newsletter :global(.newsletter-form input),
+      .newsletter :global(.newsletter-form button) {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
     }
   </style>
