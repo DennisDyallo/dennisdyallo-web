@@ -24,9 +24,22 @@ const artists = [
     <section>
       <h2>Moonkin</h2>
       <p>Moonkin is my DJ name for electronic and psychedelic sets shaped around movement, atmosphere, and the long arc of a room. It belongs to the same practice as everything else here: listen carefully, build the container, let the system breathe.</p>
-      <div class="embed-placeholder">
-        <p>Mix embed pending. Public Mixcloud or SoundCloud account was not confidently identified during Phase 2, so this stays as a code-visible TODO until Dennis confirms the canonical player URL.</p>
-        <!-- TODO: Replace with Dennis-confirmed Mixcloud or SoundCloud iframe for Moonkin. -->
+      <div class="moonkin-embed">
+        <iframe
+          width="100%"
+          height="300"
+          scrolling="no"
+          frameborder="no"
+          allow="autoplay; encrypted-media"
+          loading="lazy"
+          title="Moonkin — DJ Sets on SoundCloud"
+          src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1859444901&color=%23E0531C&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+        ></iframe>
+        <p class="moonkin-credit">
+          <a href="https://soundcloud.com/moonkinsounds" target="_blank" rel="noopener">Moonkin</a>
+          ·
+          <a href="https://soundcloud.com/moonkinsounds/sets/dj-sets" target="_blank" rel="noopener">DJ Sets</a>
+        </p>
       </div>
     </section>
     <section>
@@ -61,11 +74,14 @@ const artists = [
     p { color: var(--muted); line-height: 1.65; }
     section { padding: var(--space-xl) 0; border-bottom: 1px solid var(--border); }
     .artist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-md); }
-    .artist-card, .embed-placeholder { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-lg); }
-    .artist-card { color: inherit; transition: border-color var(--transition-normal), transform var(--transition-fast); }
+    .artist-card { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-lg); color: inherit; transition: border-color var(--transition-normal), transform var(--transition-fast); }
     .artist-card:hover { border-color: var(--primary); transform: translateY(-2px); opacity: 1; }
     .artist-card span { display: inline-block; margin-top: var(--space-md); color: var(--primary); font-size: var(--type-small); }
-    .embed-placeholder { margin-top: var(--space-lg); border-style: dashed; }
+    .moonkin-embed { margin-top: var(--space-lg); max-width: 720px; border-radius: var(--radius-md); overflow: hidden; }
+    .moonkin-embed iframe { display: block; width: 100%; height: 300px; border: 0; }
+    .moonkin-credit { margin-top: var(--space-xs); font-size: var(--type-small); color: var(--muted); }
+    .moonkin-credit a { color: var(--muted); text-decoration: none; }
+    .moonkin-credit a:hover { color: var(--primary); }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
     .page-hero { margin: 0 0 var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface); }
     .page-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
