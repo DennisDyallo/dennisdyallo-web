@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LineWeave from '../components/ornament/LineWeave.astro';
 
 const updated = new Date('2026-05-18T12:00:00+02:00');
 ---
@@ -48,6 +49,8 @@ const updated = new Date('2026-05-18T12:00:00+02:00');
         <p>Spring in Sweden has the same teaching in a simpler language: thaw first, growth second.</p>
       </section>
     </div>
+
+    <div class="end-ornament" aria-hidden="true"><LineWeave /></div>
   </main>
 
   <style>
@@ -57,6 +60,7 @@ const updated = new Date('2026-05-18T12:00:00+02:00');
     h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
     .updated { color: var(--muted); font-size: var(--type-small); }
     .snapshot { display: grid; gap: var(--space-xl); }
+    .end-ornament { display: flex; justify-content: center; margin: var(--space-3xl) 0 var(--space-2xl); color: var(--gold); }
     section { padding-bottom: var(--space-xl); border-bottom: 1px solid var(--border); }
     h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
     p, li { color: var(--muted); line-height: 1.65; }

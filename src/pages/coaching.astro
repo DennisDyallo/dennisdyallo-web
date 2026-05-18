@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import StepPattern from '../components/ornament/StepPattern.astro';
 ---
 
 <BaseLayout title="Coaching" description="Zen coaching, meditation facilitation, and grounded inner work.">
@@ -31,6 +32,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <p>I am a certified Zen Coach with practice roots in Vipassana meditation, yoga, contemplative traditions, men's circles, movement work, and retreat facilitation.</p>
         <p>The approach is warm and direct. Less guru, more honest mirror. I care about sovereignty: helping you return to your own seeing instead of becoming dependent on mine.</p>
       </section>
+      <div class="mid-ornament" aria-hidden="true"><StepPattern /></div>
+
       <section>
         <h2>Pricing</h2>
         <p>By inquiry — sessions start at [TBD] SEK.</p>
@@ -66,6 +69,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     h2 { font-size: var(--type-h3); margin-bottom: var(--space-sm); }
     h3 { font-family: var(--font-sans); font-size: var(--type-body); font-weight: 600; margin-top: var(--space-md); margin-bottom: var(--space-xs); }
     p + p { margin-top: var(--space-sm); }
+    .mid-ornament { display: flex; justify-content: center; margin: var(--space-2xl) 0; color: var(--gold); }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
     .page-hero { margin: 0 0 var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface); }
     .page-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }

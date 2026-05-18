@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LineWeave from '../components/ornament/LineWeave.astro';
 
 const pageTitle = 'Library';
 const pageDescription = 'Books and influences that shaped my thinking across sovereignty, systems, inner work, and practice.';
@@ -193,6 +194,8 @@ const recentlyFinished = [
         </div>
       </section>
     </div>
+
+    <div class="end-ornament" aria-hidden="true"><LineWeave /></div>
   </main>
 
   <style>
@@ -201,6 +204,7 @@ const recentlyFinished = [
       margin: 0 auto;
       padding: var(--space-2xl) var(--space-lg);
     }
+    .end-ornament { display: flex; justify-content: center; margin: var(--space-3xl) 0 var(--space-2xl); color: var(--gold); }
 
     .page-header {
       margin-bottom: var(--space-2xl);

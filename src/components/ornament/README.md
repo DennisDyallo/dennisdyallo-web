@@ -54,9 +54,19 @@ import TriangleChain from '../components/ornament/TriangleChain.astro';
 ### ArcBracket.astro
 
 **Visual:** Paired curved brackets with center dot.  
-**Use:** Framing element for pull quotes or emphasis blocks.  
+**Use:** Framing element for pull quotes or emphasis blocks. **Currently unused — reserved for per-post manual integration around blockquotes when an essay calls for emphasis.**  
 **Size:** 100×24px  
 **Symbolism:** Containment, framing, closure.
+
+**Manual placement pattern** (when writing a blog post that has a pull-quote you want emphasized):
+```astro
+<div class="pull-quote-frame">
+  <ArcBracket />
+  <blockquote>The pulled quote.</blockquote>
+  <ArcBracket style="transform: rotate(180deg);" />
+</div>
+```
+(Markdown posts don't support this yet — would need to be added to an MDX post or via a remark plugin.)
 
 ```astro
 import ArcBracket from '../components/ornament/ArcBracket.astro';
