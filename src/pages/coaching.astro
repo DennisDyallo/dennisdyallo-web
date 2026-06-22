@@ -11,12 +11,13 @@ import ArcBracket from '../components/ornament/ArcBracket.astro';
     </figure>
 
     <section class="hero">
-      <p class="eyebrow">Zen Coaching Session</p>
+      <p class="eyebrow">Zen coaching session</p>
       <h1>Grounded inquiry for people who are done performing clarity.</h1>
-      <p class="lede">This is a reservation for an inquiry session, with a total session length of 60 minutes.</p>
+      <p class="lede">A 60-minute inquiry session — grounding, honest dialogue, and space to let your own seeing return.</p>
+      <p class="launch-note"><strong>Launch offer:</strong> 350 SEK per session (half off the standard 700 SEK) while I complete my certification — through 31 August 2026.</p>
       <div class="cta-group">
-        <a class="cta cta-primary" href="mailto:dennis@dyallo.se?subject=Zen%20Coaching%20Session%20%E2%80%94%20Reservation">Reserve a session</a>
-        <a class="cta cta-secondary" href="mailto:dennis@dyallo.se?subject=Free%2015-min%20Screening%20Call">First-time? Book a free 15-min screening call</a>
+        <a class="cta cta-primary" href="https://calendar.proton.me/bookings#IGkV7dEHWdtLywfZTLXP2KivEYKrhBRYtxTLf8IdkzI=" target="_blank" rel="noopener">Book a session</a>
+        <a class="cta cta-secondary" href="mailto:dennis@dyallo.se?subject=Free%2020-min%20intro%20call">First time? Book a free 20-min intro call</a>
       </div>
     </section>
 
@@ -34,16 +35,23 @@ import ArcBracket from '../components/ornament/ArcBracket.astro';
       </div>
 
       <section>
-        <h2>Who This Is For</h2>
+        <h2>Who this is for</h2>
         <p>People navigating change, creative blocks, relational friction, spiritual bypassing, or the quiet sense that the old operating system is no longer honest.</p>
         <p>It fits best if you want directness without theater: no guru posture, no productivity cosplay, no promise that one session will turn your life into a diagram.</p>
+      </section>
+
+      <section>
+        <h2>Pricing</h2>
+        <p><strong>350 SEK per 60-minute session</strong> during my launch — half off the standard 700 SEK. I'm running this introductory rate while I complete my certification and gather feedback, through 31 August 2026.</p>
+        <p>First-time clients can start with a free 20-minute intro call to feel the fit before booking.</p>
+        <p>Sessions are held online (the default), in person at my place, or at a meeting place of your choice (limited availability).</p>
       </section>
 
       <div class="mid-ornament" aria-hidden="true"><StepPattern /></div>
 
       <section>
-        <h2>Training And Approach</h2>
-        <p>I am a certified Zen Coach with practice roots in Vipassana meditation, yoga, contemplative traditions, men's circles, movement work, and retreat facilitation.</p>
+        <h2>Training and approach</h2>
+        <p>I've completed the full year-long Zen Coaching training — all five modules — and am now working toward full certification. My practice roots run through Vipassana meditation, yoga, contemplative traditions, men's circles, movement work, and retreat facilitation.</p>
         <p>The approach is warm and direct. Less guru, more honest mirror. I care about sovereignty: helping you return to your own seeing instead of becoming dependent on mine.</p>
       </section>
 
@@ -55,9 +63,9 @@ import ArcBracket from '../components/ornament/ArcBracket.astro';
           <h3>Do I need meditation experience?</h3>
           <p>No. A willingness to pay attention honestly is more important than any formal practice history.</p>
           <h3>Can sessions be remote?</h3>
-          <p>Yes. Remote sessions are the default; in-person work can be discussed when geography and context make sense.</p>
+          <p>Yes. Online is the default. In person is also possible at my place, or at a meeting place of your choice (limited availability).</p>
           <h3>How long is a session?</h3>
-          <p>60 minutes. Free 15-min screening call available for first-time clients to find your fit.</p>
+          <p>60 minutes. A free 20-minute intro call is available for first-time clients to find your fit.</p>
         </div>
       </section>
 
@@ -74,7 +82,9 @@ import ArcBracket from '../components/ornament/ArcBracket.astro';
     .eyebrow { color: var(--gold); font-size: var(--type-small); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
     h1 { font-size: var(--type-h1); margin-bottom: var(--space-md); }
     .hero p, section p { color: var(--muted); line-height: 1.65; }
-    .lede { font-family: var(--font-serif); font-size: 1.12rem; color: var(--ink); margin-bottom: var(--space-lg); }
+    .lede { font-family: var(--font-serif); font-size: 1.12rem; color: var(--ink); margin-bottom: var(--space-md); }
+    .launch-note { color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-lg); font-size: var(--type-small); }
+    .launch-note strong { color: var(--gold); }
     .cta-group { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: center; margin-top: var(--space-md); }
     .cta { display: inline-flex; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-sm); text-decoration: none; transition: opacity var(--transition-fast), background var(--transition-fast); }
     .cta-primary { background: var(--primary); color: var(--bg); font-weight: 600; }

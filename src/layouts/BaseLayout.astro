@@ -119,9 +119,7 @@ const personJsonLd = {
             <a href="/blog" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/blog') }]}>Blog</a>
             <a href="/library" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/library') }]}>Library</a>
             <a href="/projects" class:list={['nav-link', { active: Astro.url.pathname.startsWith('/projects') }]}>Projects</a>
-            <button id="theme-toggle" class="nav-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
-              <span class="sun" aria-hidden="true">☀</span><span class="moon" aria-hidden="true">☾</span>
-            </button>
+            <button id="theme-toggle" class="nav-toggle" aria-label="Toggle light/dark mode" title="Toggle theme"></button>
           </nav>
         </div>
       </header>
@@ -194,15 +192,20 @@ const personJsonLd = {
         font-size: 0.85rem;
         line-height: 1;
         margin-left: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.9rem;
+        height: 1.9rem;
       }
+      .nav-toggle::before { content: '☾'; }
+      [data-theme='dark'] .nav-toggle::before { content: '☀'; }
       .nav-toggle:hover, .nav-toggle:focus-visible {
         background: var(--primary);
         color: var(--bg);
         border-color: var(--primary);
         outline: none;
       }
-      [data-theme='dark'] .nav-toggle .sun { display: none; }
-      [data-theme='light'] .nav-toggle .moon { display: none; }
       @media (max-width: 640px) {
         .site-header-inner { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
         .site-nav { gap: 0.75rem; font-size: 0.82rem; }
