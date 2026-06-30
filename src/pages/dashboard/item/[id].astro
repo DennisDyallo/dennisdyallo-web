@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '../../../layouts/BaseLayout.astro';
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 import RupicolaMark from '../../../components/RupicolaMark.astro';
 import dashboardData from '../../../data/vault-dashboard.json';
 
@@ -27,7 +27,7 @@ const formattedDate = date.toLocaleDateString('en-GB', { month: 'long', day: '2-
 const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 ---
 
-<BaseLayout title={item.title} description={item.subtitle} canonicalUrl={`https://vault.dyallo.se/dashboard/item/${item.id}`}>
+<DashboardLayout title={item.title} description={item.subtitle} canonicalUrl={`https://vault.dyallo.se/dashboard/item/${item.id}`}>
   <main class="item-shell" data-pagefind-ignore>
     <nav class="crumbs" aria-label="Dashboard breadcrumb">
       <a href="/dashboard">← Vault Quest Log</a>
@@ -169,4 +169,4 @@ const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute
       .window-bar { display: grid; }
     }
   </style>
-</BaseLayout>
+</DashboardLayout>

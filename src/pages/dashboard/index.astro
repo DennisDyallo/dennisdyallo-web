@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import RupicolaMark from '../../components/RupicolaMark.astro';
 import dashboardData from '../../data/vault-dashboard.json';
 
@@ -103,7 +103,7 @@ function typeLabel(type: ActivityType) {
 }
 ---
 
-<BaseLayout
+<DashboardLayout
   title="Vault Quest Log"
   description="Private Rupicola OS dashboard for Obsidian vault activity."
   canonicalUrl="https://vault.dyallo.se/dashboard/"
@@ -695,4 +695,4 @@ function typeLabel(type: ActivityType) {
       .save-stats { grid-template-columns: 1fr; }
     }
   </style>
-</BaseLayout>
+</DashboardLayout>
