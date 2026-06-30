@@ -7,7 +7,7 @@ import remarkWikilinks from './src/lib/remark-wikilinks.ts';
 export default defineConfig({
   site: 'https://dyallo.se',
   output: 'static',
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !new URL(page).pathname.startsWith('/dashboard') })],
   markdown: {
     remarkPlugins: [remarkWikilinks],
     shikiConfig: {

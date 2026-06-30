@@ -68,6 +68,7 @@ Phase 2 fills the Convergence Node register pages:
 - `/dev` — engineering positioning and project highlights
 - `/music` — Moonkin, Echological roster, fire arts, and flow community
 - `/projects` — case-study index for dyallo.se, PAI, and Echological
+- `/dashboard` — private Vault Quest Log dashboard for Obsidian activity. Must be protected by Caddy basic auth; see [`docs/vault-dashboard.md`](docs/vault-dashboard.md).
 
 ## Open Graph Images
 

@@ -6,10 +6,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "bun run dashboard:generate && astro dev",
+    "build": "bun run dashboard:generate && astro build && bun run dashboard:verify-private",
     "preview": "astro preview",
     "publish": "bun scripts/publish.ts",
+    "dashboard:generate": "bun scripts/generate-vault-dashboard.ts",
+    "dashboard:verify-private": "bun scripts/verify-dashboard-privacy.ts",
     "astro": "astro"
   },
   "dependencies": {

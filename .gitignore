@@ -2,6 +2,7 @@
 dist/
 # generated types
 .astro/
+src/data/vault-dashboard.json
 
 # dependencies
 node_modules/
@@ -11,6 +12,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+Logs/
 
 
 # environment variables

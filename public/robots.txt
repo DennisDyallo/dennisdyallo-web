@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /dashboard/
 
 Sitemap: https://dyallo.se/sitemap-index.xml
