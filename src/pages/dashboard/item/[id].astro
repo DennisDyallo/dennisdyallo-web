@@ -15,6 +15,14 @@ type ActivityItem = {
   html: string;
   obsidianUrl: string;
   person?: string;
+  summary: {
+    status: 'cached' | 'generated' | 'error';
+    summary: string;
+    key_points: string[];
+    action_items: string[];
+    tags: string[];
+    updated_at: string;
+  };
 };
 
 export function getStaticPaths() {
@@ -58,6 +66,30 @@ const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute
           <div><dt>Tags</dt><dd>{item.tags.length ? item.tags.join(', ') : 'none'}</dd></div>
         </dl>
       </header>
+
+      <section class:list={['summary-panel', `status-${item.summary.status}`]} aria-labelledby="summary-title">
+        <div class="summary-topline">
+          <p id="summary-title">Auto Brief</p>
+          <span>{item.summary.status === 'cached' ? 'cached sidecar' : item.summary.status === 'generated' ? 'generated sidecar' : 'sidecar fallback'}</span>
+        </div>
+        <p class="summary-copy">{item.summary.summary}</p>
+        <div class="summary-grid">
+          <div>
+            <h2>Key Points</h2>
+            <ul>
+              {item.summary.key_points.map((point) => <li>{point}</li>)}
+            </ul>
+          </div>
+          <div>
+            <h2>Action Items</h2>
+            {item.summary.action_items.length ? (
+              <ul>{item.summary.action_items.map((action) => <li>{action}</li>)}</ul>
+            ) : (
+              <p class="empty-state">No explicit action items detected.</p>
+            )}
+          </div>
+        </div>
+      </section>
 
       <section class="markdown-body" set:html={item.html} />
     </article>
@@ -137,6 +169,55 @@ const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute
     dt { color: var(--primary); font-weight: 900; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.12em; }
     dd { color: var(--muted); overflow-wrap: anywhere; }
 
+    .summary-panel {
+      margin: clamp(1rem, 3vw, 2rem);
+      margin-bottom: 0;
+      border: 2px solid rgba(214, 168, 95, 0.58);
+      background:
+        linear-gradient(135deg, rgba(214, 168, 95, 0.13), rgba(141, 103, 255, 0.12)),
+        rgba(8, 6, 5, 0.64);
+      box-shadow: inset 2px 2px 0 rgba(242, 234, 219, 0.12), inset -2px -2px 0 rgba(0, 0, 0, 0.45);
+      padding: clamp(0.9rem, 2.4vw, 1.3rem);
+    }
+
+    .summary-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      color: var(--gold);
+      font: 900 0.72rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .summary-topline span { color: #80c56c; }
+    .status-error .summary-topline span { color: #c46874; }
+
+    .summary-copy {
+      margin: 0.75rem 0 1rem;
+      color: var(--ink);
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .summary-grid h2 {
+      color: var(--primary);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.35rem;
+    }
+
+    .summary-grid ul { margin: 0; padding-left: 1.1rem; }
+    .summary-grid li,
+    .empty-state { color: var(--muted); line-height: 1.55; margin: 0.35rem 0; }
+
     .markdown-body {
       padding: clamp(1rem, 3vw, 2rem);
       max-width: 76ch;
@@ -167,6 +248,7 @@ const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute
       .title-row { grid-template-columns: 1fr; }
       .mark { display: none; }
       .window-bar { display: grid; }
+      .summary-grid { grid-template-columns: 1fr; }
     }
   </style>
 </DashboardLayout>

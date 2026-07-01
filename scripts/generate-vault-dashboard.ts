@@ -1,4 +1,5 @@
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -39,12 +40,24 @@ type ActivityItem = {
   sourceUrl: string;
   person?: 'oren' | 'watashi';
   status?: 'ok' | 'stale' | 'unknown' | 'down';
+  summary: SummaryBrief;
   search: SearchFields;
+};
+
+type SummaryBrief = {
+  status: 'cached' | 'generated' | 'error';
+  summary: string;
+  key_points: string[];
+  action_items: string[];
+  tags: string[];
+  updated_at: string;
 };
 
 const VAULT_DIR = process.env.VAULT_DASHBOARD_VAULT ?? join(homedir(), 'Documents/Sunthings_AppStorage_EU_e2e');
 const OUT_FILE = join(process.cwd(), 'src/data/vault-dashboard.json');
+const SUMMARY_DIR = process.env.VAULT_DASHBOARD_SUMMARY_DIR ?? join(process.cwd(), 'src/data/vault-dashboard-summaries');
 const VAULT_NAME = 'Sunthings_AppStorage_EU_e2e';
+const SUMMARY_VERSION = 1;
 
 const LIMITS: Record<ActivityType, number> = {
   'sias-lens': 30,
@@ -108,6 +121,106 @@ function truncate(input: string, max = 220): string {
   const clean = input.replace(/\s+/g, ' ').trim();
   if (clean.length <= max) return clean;
   return `${clean.slice(0, max - 1).trim()}…`;
+}
+
+function contentHash(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
+
+function summarySidecarPath(vaultPath: string, hash: string): string {
+  const id = createHash('sha256').update(`${vaultPath}\0${hash}`).digest('hex').slice(0, 24);
+  return join(SUMMARY_DIR, `${id}.json`);
+}
+
+function splitSentences(input: string): string[] {
+  return input
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 24);
+}
+
+function cleanSummaryLine(input: string): string {
+  return stripMarkdown(input).replace(/\s+/g, ' ').trim();
+}
+
+function extractSummarySection(markdown: string): string {
+  const body = stripFrontmatter(markdown);
+  const match = body.match(/^##\s+Summary\s*\n([\s\S]*?)(?=^##\s+|\s*$)/im);
+  return match ? cleanSummaryLine(match[1]) : '';
+}
+
+function extractActionItems(markdown: string): string[] {
+  return stripFrontmatter(markdown)
+    .split('\n')
+    .map((line) => cleanSummaryLine(line.replace(/^[-*]\s+/, '')))
+    .filter((line) => /\b(action|todo|to do|next|follow[- ]?up|pending|awaiting|needs?|should|must)\b/i.test(line))
+    .slice(0, 5);
+}
+
+function deriveSummary(markdown: string, tags: string[]): Omit<SummaryBrief, 'status' | 'updated_at'> {
+  const fm = extractFrontmatter(markdown);
+  const frontmatterSummary = typeof fm.summary === 'string' ? cleanSummaryLine(fm.summary) : '';
+  const summarySection = extractSummarySection(markdown);
+  const body = stripMarkdown(markdown);
+  const sentences = splitSentences(body);
+  const summary = truncate(frontmatterSummary || summarySection || sentences.slice(0, 2).join(' ') || body, 520);
+  const headings = extractHeadings(markdown).filter((heading) => !/^summary$/i.test(heading)).slice(0, 5);
+  const key_points = (headings.length ? headings : sentences.slice(0, 5)).map((point) => truncate(point, 180));
+  const action_items = extractActionItems(markdown).map((item) => truncate(item, 180));
+
+  return {
+    summary,
+    key_points: key_points.length ? key_points : [truncate(body || 'No readable text extracted.', 180)],
+    action_items,
+    tags: tags.slice(0, 8),
+  };
+}
+
+function isSummarySidecar(value: unknown, hash: string): value is SummaryBrief & { content_hash: string; version: number } {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return (
+    record.version === SUMMARY_VERSION &&
+    record.content_hash === hash &&
+    typeof record.summary === 'string' &&
+    Array.isArray(record.key_points) &&
+    Array.isArray(record.action_items) &&
+    Array.isArray(record.tags) &&
+    typeof record.updated_at === 'string'
+  );
+}
+
+function loadOrCreateSummary(vaultPath: string, markdown: string, tags: string[]): SummaryBrief {
+  const hash = contentHash(markdown);
+  const sidecarPath = summarySidecarPath(vaultPath, hash);
+  try {
+    if (existsSync(sidecarPath)) {
+      const parsed = JSON.parse(readFileSync(sidecarPath, 'utf8'));
+      if (isSummarySidecar(parsed, hash)) {
+        return {
+          status: 'cached',
+          summary: parsed.summary,
+          key_points: parsed.key_points,
+          action_items: parsed.action_items,
+          tags: parsed.tags,
+          updated_at: parsed.updated_at,
+        };
+      }
+    }
+
+    const derived = deriveSummary(markdown, tags);
+    const updated_at = new Date().toISOString();
+    mkdirSync(SUMMARY_DIR, { recursive: true });
+    writeFileSync(
+      sidecarPath,
+      `${JSON.stringify({ version: SUMMARY_VERSION, path: vaultPath, content_hash: hash, updated_at, ...derived }, null, 2)}\n`,
+      'utf8',
+    );
+    return { status: 'generated', updated_at, ...derived };
+  } catch {
+    return { status: 'error', updated_at: new Date().toISOString(), ...deriveSummary(markdown, tags) };
+  }
 }
 
 function extractFrontmatter(markdown: string): Record<string, string | string[]> {
@@ -273,6 +386,7 @@ function makeItem(input: {
   const body = stripMarkdown(input.markdown);
   const title = input.title || headings[0] || basename(input.path, '.md');
   const subtitle = input.subtitle || headings.find((heading) => heading !== title) || TYPE_LABELS[input.type];
+  const tags = input.tags ?? [];
   const id = slugify(`${input.type}-${input.timestamp}-${input.idSeed ?? input.path}-${title}`);
   return {
     id,
@@ -281,7 +395,7 @@ function makeItem(input: {
     subtitle,
     timestamp: input.timestamp,
     path: input.path,
-    tags: input.tags ?? [],
+    tags,
     excerpt: truncate(body),
     content: stripFrontmatter(input.markdown),
     html: markdownToHtml(input.markdown),
@@ -289,11 +403,12 @@ function makeItem(input: {
     sourceUrl: sourceUrl(id),
     person: input.person,
     status: input.status,
+    summary: loadOrCreateSummary(input.path, input.markdown, tags),
     search: {
       title,
       headings: headings.join(' '),
       bold: bold.join(' '),
-      tags: (input.tags ?? []).join(' '),
+      tags: tags.join(' '),
       path: input.path.replace(/[/-]/g, ' '),
       body,
     },

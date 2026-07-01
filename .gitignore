@@ -3,6 +3,7 @@ dist/
 # generated types
 .astro/
 src/data/vault-dashboard.json
+src/data/vault-dashboard-summaries/
 
 # dependencies
 node_modules/
