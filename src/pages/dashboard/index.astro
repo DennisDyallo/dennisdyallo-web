@@ -59,6 +59,10 @@ const latestLens = items.find((item) => item.type === 'sias-lens');
 const conversations = items.filter((item) => item.type === 'conversation').slice(0, 4);
 const projects = items.filter((item) => item.type === 'project').slice(0, 5);
 const daemons = items.filter((item) => item.type === 'daemon-status').slice(0, 10);
+function isPeopleDossier(item: ActivityItem) {
+  return item.path === 'Knowledge/People.md' || item.path.startsWith('Knowledge/People/') || item.tags.includes('type/person') || item.tags.includes('person');
+}
+const peopleDossierCount = items.filter(isPeopleDossier).length;
 const searchPayload = items.map((item) => ({
   id: item.id,
   type: item.type,
@@ -151,7 +155,7 @@ function typeLabel(type: ActivityType) {
         <button id="clear-search" type="button">CLR</button>
       </div>
       <p class="search-help">
-        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:lens</code>, <code>type:conversation</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
+        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:lens</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
       </p>
       <div id="search-results" class="search-results" aria-live="polite"></div>
     </section>
@@ -164,6 +168,11 @@ function typeLabel(type: ActivityType) {
           <span class="lane-count">{lane.count}</span>
         </button>
       ))}
+      <button class="lane-card dossier-card" type="button" data-dossier="people">
+        <span class="lane-glyph">◎</span>
+        <span class="lane-text"><strong>People / Dossiers</strong><em>Person files</em></span>
+        <span class="lane-count">{peopleDossierCount}</span>
+      </button>
     </section>
 
     <section class="main-grid">
@@ -256,9 +265,10 @@ function typeLabel(type: ActivityType) {
       'daemon-update': 'Daemon Update',
       'daemon-status': 'Daemon Status',
     };
-    const filterNames = ['type', 'person', 'after', 'before'];
+    const filterNames = ['type', 'person', 'after', 'before', 'dossier'];
     const typeValues = Object.keys(labels).sort((a, b) => a.length - b.length || a.localeCompare(b));
     const personValues = [...new Set(items.map((item) => item.person).filter(Boolean))].sort();
+    const dossierValues = ['people'];
 
     function parseQuery(query) {
       const quoted = [...query.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
@@ -266,7 +276,7 @@ function typeLabel(type: ActivityType) {
       const filters = {};
       const terms = [...quoted];
       for (const raw of withoutQuoted.split(/\s+/).filter(Boolean)) {
-        const filter = raw.match(/^(type|person|after|before):(.+)$/i);
+        const filter = raw.match(/^(type|person|after|before|dossier):(.+)$/i);
         if (filter) filters[filter[1].toLowerCase()] = filter[2].toLowerCase();
         else terms.push(raw);
       }
@@ -280,6 +290,11 @@ function typeLabel(type: ActivityType) {
         if (!item.type.includes(wanted)) return false;
       }
       if (filters.person && item.person !== filters.person) return false;
+      if (filters.dossier) {
+        const wanted = filters.dossier;
+        const isPeople = item.path === 'Knowledge/People.md' || item.path.startsWith('Knowledge/People/') || item.tags.includes('type/person') || item.tags.includes('person');
+        if (!['people', 'person', 'persons', 'dossiers'].includes(wanted) || !isPeople) return false;
+      }
       if (filters.after && Date.parse(item.timestamp) < Date.parse(filters.after)) return false;
       if (filters.before && Date.parse(item.timestamp) > Date.parse(filters.before)) return false;
       return true;
@@ -383,11 +398,11 @@ function typeLabel(type: ActivityType) {
       const token = tokenMatch[0];
       const tokenStart = tokenMatch.index;
       const lowerToken = token.toLowerCase();
-      const filterMatch = lowerToken.match(/^(type|person|after|before):(.*)$/);
+      const filterMatch = lowerToken.match(/^(type|person|after|before|dossier):(.*)$/);
 
       if (filterMatch) {
         const [, filterName, value] = filterMatch;
-        const values = filterName === 'type' ? typeValues : filterName === 'person' ? personValues : [];
+        const values = filterName === 'type' ? typeValues : filterName === 'person' ? personValues : filterName === 'dossier' ? dossierValues : [];
         const completion = completeFromList(value, values);
         return completion ? `${query.slice(0, tokenStart)}${filterName}:${completion}` : '';
       }
@@ -464,6 +479,14 @@ function typeLabel(type: ActivityType) {
       button.addEventListener('click', () => {
         const lane = button.getAttribute('data-lane');
         input.value = `type:${lane}`;
+        renderResults(input.value);
+        input.focus();
+      });
+    });
+    document.querySelectorAll('[data-dossier]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const dossier = button.getAttribute('data-dossier');
+        input.value = `dossier:${dossier}`;
         renderResults(input.value);
         input.focus();
       });
