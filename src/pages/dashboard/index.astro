@@ -151,7 +151,7 @@ function typeLabel(type: ActivityType) {
         <button id="clear-search" type="button">CLR</button>
       </div>
       <p class="search-help">
-        Shortcuts: <kbd>/</kbd> focus, <kbd>Esc</kbd> clear. Filters: <code>type:lens</code>, <code>type:conversation</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
+        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:lens</code>, <code>type:conversation</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
       </p>
       <div id="search-results" class="search-results" aria-live="polite"></div>
     </section>
@@ -256,6 +256,9 @@ function typeLabel(type: ActivityType) {
       'daemon-update': 'Daemon Update',
       'daemon-status': 'Daemon Status',
     };
+    const filterNames = ['type', 'person', 'after', 'before'];
+    const typeValues = Object.keys(labels).sort((a, b) => a.length - b.length || a.localeCompare(b));
+    const personValues = [...new Set(items.map((item) => item.person).filter(Boolean))].sort();
 
     function parseQuery(query) {
       const quoted = [...query.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
@@ -335,6 +338,71 @@ function typeLabel(type: ActivityType) {
       return `score ${Math.round(score)}`;
     }
 
+    function completeFromList(token, values) {
+      return values.find((value) => value.startsWith(token) && value !== token) || '';
+    }
+
+    function safeTitleTokens(title) {
+      return String(title || '')
+        .toLowerCase()
+        .split(/\s+/)
+        .map((token) => token.replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, ''))
+        .filter((token) => token && !token.includes(':') && !token.includes('"'))
+        .filter((token) => !filterNames.some((name) => token.startsWith(`${name}:`)));
+    }
+
+    function titleCompletion(stem) {
+      if (!stem || stem.includes(':') || stem.includes('"')) return '';
+      const normalizedStem = stem.toLowerCase().trim().replace(/\s+/g, ' ');
+      if (!normalizedStem || filterNames.some((name) => normalizedStem.split(/\s+/).some((token) => token.startsWith(`${name}:`)))) return '';
+      const candidates = [];
+      for (const item of items) {
+        const tokens = safeTitleTokens(item.title);
+        for (let length = 1; length <= tokens.length; length += 1) {
+          const prefix = tokens.slice(0, length).join(' ');
+          if (prefix.startsWith(normalizedStem) && prefix !== normalizedStem) candidates.push(prefix);
+        }
+      }
+      return candidates.sort((a, b) => a.length - b.length || a.localeCompare(b))[0] || '';
+    }
+
+    function trailingFreeRunStart(query) {
+      const tokens = [...query.matchAll(/\S+/g)];
+      let start = null;
+      for (let index = tokens.length - 1; index >= 0; index -= 1) {
+        const token = tokens[index][0];
+        if (token.includes(':') || token.includes('"')) break;
+        start = tokens[index].index;
+      }
+      return start;
+    }
+
+    function tabCompletion(query) {
+      const tokenMatch = query.match(/\S+$/);
+      if (!tokenMatch || /\s$/.test(query)) return '';
+      const token = tokenMatch[0];
+      const tokenStart = tokenMatch.index;
+      const lowerToken = token.toLowerCase();
+      const filterMatch = lowerToken.match(/^(type|person|after|before):(.*)$/);
+
+      if (filterMatch) {
+        const [, filterName, value] = filterMatch;
+        const values = filterName === 'type' ? typeValues : filterName === 'person' ? personValues : [];
+        const completion = completeFromList(value, values);
+        return completion ? `${query.slice(0, tokenStart)}${filterName}:${completion}` : '';
+      }
+
+      if (!lowerToken.includes(':') && !lowerToken.includes('"')) {
+        const filterName = completeFromList(lowerToken, filterNames);
+        if (filterName) return `${query.slice(0, tokenStart)}${filterName}:`;
+      }
+
+      const freeStart = trailingFreeRunStart(query);
+      if (freeStart === null) return '';
+      const completion = titleCompletion(query.slice(freeStart));
+      return completion ? `${query.slice(0, freeStart)}${completion}` : '';
+    }
+
     function renderResults(query) {
       const { terms, filters } = parseQuery(query);
       const ranked = items
@@ -372,6 +440,15 @@ function typeLabel(type: ActivityType) {
     }
 
     input?.addEventListener('input', () => renderResults(input.value));
+    input?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Tab') return;
+      if (input.selectionStart !== input.value.length || input.selectionEnd !== input.value.length) return;
+      const completion = tabCompletion(input.value);
+      if (!completion || completion === input.value) return;
+      event.preventDefault();
+      input.value = completion;
+      renderResults(input.value);
+    });
     clear?.addEventListener('click', () => { input.value = ''; renderResults(''); input.focus(); });
     document.addEventListener('keydown', (event) => {
       if (event.key === '/' && document.activeElement !== input) {
