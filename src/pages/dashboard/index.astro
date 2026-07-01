@@ -316,6 +316,25 @@ function typeLabel(type: ActivityType) {
       return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     }
 
+    function matchReasons(item, terms) {
+      if (terms.length === 0) return [];
+      const fields = [
+        ['title', [item.search.title, item.title, item.subtitle]],
+        ['heading', [item.search.headings]],
+        ['tag', [item.search.tags]],
+        ['path', [item.search.path, item.path]],
+        ['body', [item.search.bold, item.excerpt, item.search.body]],
+      ];
+      return fields
+        .filter(([, values]) => terms.some((term) => values.some((value) => String(value || '').toLowerCase().includes(term))))
+        .map(([label]) => label);
+    }
+
+    function scoreLabel(score, terms) {
+      if (terms.length === 0) return 'filter match';
+      return `score ${Math.round(score)}`;
+    }
+
     function renderResults(query) {
       const { terms, filters } = parseQuery(query);
       const ranked = items
@@ -333,19 +352,23 @@ function typeLabel(type: ActivityType) {
         results.innerHTML = '<p class="no-results">No matching quests found.</p>';
         return;
       }
-      results.innerHTML = ranked.map(({ item, score }) => `
+      results.innerHTML = ranked.map(({ item, score }) => {
+        const reasons = matchReasons(item, terms);
+        return `
         <article class="result-card">
-          <div class="result-meta"><span>${labels[item.type] || item.type}</span><span>score ${Math.round(score)}</span></div>
+          <div class="result-meta"><span>${labels[item.type] || item.type}</span><span>${scoreLabel(score, terms)}</span></div>
           <h3>${escapeHtml(item.title)}</h3>
           <p>${escapeHtml(item.subtitle)}</p>
           <p>${escapeHtml(item.excerpt)}</p>
           <small>${escapeHtml(item.path)}</small>
+          ${reasons.length ? `<div class="match-reasons">${reasons.map((reason) => `<span>${reason}</span>`).join('')}</div>` : ''}
           <div class="card-actions">
             <a href="${item.sourceUrl}">Open inline</a>
             <a href="${item.obsidianUrl}">Open in Vault</a>
           </div>
         </article>
-      `).join('');
+      `;
+      }).join('');
     }
 
     input?.addEventListener('input', () => renderResults(input.value));
@@ -566,6 +589,8 @@ function typeLabel(type: ActivityType) {
     .result-card h3 { margin-top: 0.35rem; color: var(--ink); }
     .result-card p { color: var(--muted); font-size: 0.9rem; }
     .result-card small { display: block; color: rgba(242, 234, 219, 0.48); margin-top: 0.35rem; overflow-wrap: anywhere; }
+    .match-reasons { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+    .match-reasons span { border: 1px solid rgba(128, 197, 108, 0.45); color: #80c56c; background: rgba(128, 197, 108, 0.08); padding: 0.12rem 0.35rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; }
 
     .lane-grid {
       display: grid;
