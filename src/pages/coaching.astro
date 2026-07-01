@@ -7,7 +7,7 @@ import ArcBracket from '../components/ornament/ArcBracket.astro';
 <BaseLayout title="Coaching" description="Zen coaching, meditation facilitation, and grounded inner work.">
   <main class="container">
     <figure class="page-hero" aria-hidden="true">
-      <img src="/heroes/coaching.webp?v=portrait-3012" srcset="/heroes/coaching-sm.webp?v=portrait-3012 800w, /heroes/coaching.webp?v=portrait-3012 1600w" sizes="(max-width: 900px) 100vw, 860px" width="1600" height="900" alt="" loading="eager" fetchpriority="high" />
+      <img src="/heroes/coaching.webp?v=portrait-3012-full" srcset="/heroes/coaching-sm.webp?v=portrait-3012-full 800w, /heroes/coaching.webp?v=portrait-3012-full 1200w" sizes="(max-width: 900px) 100vw, 720px" width="1200" height="1800" alt="" loading="eager" fetchpriority="high" />
     </figure>
 
     <section class="hero">
@@ -137,8 +137,8 @@ import ArcBracket from '../components/ornament/ArcBracket.astro';
     p + p { margin-top: var(--space-sm); }
     .mid-ornament { display: flex; justify-content: center; margin: var(--space-2xl) 0; color: var(--gold); }
     @media (max-width: 768px) { h1 { font-size: var(--type-h2); } }
-    .page-hero { margin: 0 0 var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface); }
-    .page-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .page-hero { max-width: 720px; margin: 0 auto var(--space-2xl); border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 2 / 3; background: var(--surface); }
+    .page-hero img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
   </style>
 </BaseLayout>
