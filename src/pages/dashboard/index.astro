@@ -26,7 +26,7 @@ type ActivityItem = {
   obsidianUrl: string;
   sourceUrl: string;
   person?: 'oren' | 'watashi';
-  status?: 'ok' | 'stale' | 'unknown';
+  status?: 'ok' | 'stale' | 'unknown' | 'down';
   search: {
     title: string;
     headings: string;
@@ -237,8 +237,8 @@ function typeLabel(type: ActivityType) {
           <div class="panel-title">Daemon Party</div>
           {daemons.map((item) => (
             <a class="daemon-row" href={item.sourceUrl}>
-              <span class:list={['health', item.status === 'stale' ? 'stale' : 'unknown']}></span>
-              <span>{item.title}</span>
+              <span class:list={['health', item.status === 'down' ? 'down' : item.status === 'stale' ? 'stale' : item.status === 'unknown' ? 'unknown' : 'ok']}></span>
+              <span><strong>{item.title}</strong><em>{item.subtitle}</em></span>
             </a>
           ))}
         </section>
@@ -796,11 +796,13 @@ function typeLabel(type: ActivityType) {
       border-top: 1px solid rgba(242, 234, 219, 0.08);
     }
 
-    .mini-row em { display: block; color: var(--muted); font-style: normal; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mini-row em,
+    .daemon-row em { display: block; color: var(--muted); font-style: normal; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .avatar { display: grid; place-items: center; width: 2rem; height: 2rem; background: var(--purple); color: var(--ink); font-weight: 900; border: 2px outset rgba(242, 234, 219, 0.2); }
     .pixel-dot, .health { width: 0.85rem; height: 0.85rem; background: var(--green); box-shadow: 0 0 12px rgba(128, 197, 108, 0.7); }
-    .health.stale { background: #8f3d3d; box-shadow: 0 0 12px rgba(196, 104, 116, 0.55); }
+    .health.stale,
     .health.unknown { background: var(--gold); box-shadow: 0 0 12px rgba(214, 168, 95, 0.55); }
+    .health.down { background: #c46874; box-shadow: 0 0 12px rgba(196, 104, 116, 0.7); }
 
     .no-results { color: var(--muted); }
 

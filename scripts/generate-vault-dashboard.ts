@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, extname, join, relative } from 'node:path';
@@ -37,7 +38,7 @@ type ActivityItem = {
   obsidianUrl: string;
   sourceUrl: string;
   person?: 'oren' | 'watashi';
-  status?: 'ok' | 'stale' | 'unknown';
+  status?: 'ok' | 'stale' | 'unknown' | 'down';
   search: SearchFields;
 };
 
@@ -264,7 +265,7 @@ function makeItem(input: {
   markdown: string;
   tags?: string[];
   person?: 'oren' | 'watashi';
-  status?: 'ok' | 'stale' | 'unknown';
+  status?: 'ok' | 'stale' | 'unknown' | 'down';
   idSeed?: string;
 }): ActivityItem {
   const headings = extractHeadings(input.markdown);
@@ -394,6 +395,7 @@ async function collectDaemonStatus(): Promise<ActivityItem[]> {
   const relPath = relative(VAULT_DIR, registryPath);
   const rows = [...registry.matchAll(/^\|\s*([^|]+?)\s*\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/gm)];
   const now = new Date().toISOString();
+  const launchctlText = readLaunchctlList();
   return rows
     .filter((row) => row[1] !== 'Daemon')
     .map((row, index) => {
@@ -401,19 +403,49 @@ async function collectDaemonStatus(): Promise<ActivityItem[]> {
       const label = row[2].trim();
       const kind = row[3].trim();
       const schedule = row[4].trim();
+      const status = daemonStatus(label, kind, schedule, launchctlText);
       return makeItem({
         type: 'daemon-status',
         title: name,
-        subtitle: `${kind} · ${schedule}`,
+        subtitle: `${statusLabel(status)} · ${kind} · checked ${now.slice(11, 16)}Z`,
         timestamp: now,
         path: relPath,
         markdown: `# ${name}\n\n**Label:** \`${label}\`\n\n**Type:** ${kind}\n\n**Schedule:** ${schedule}`,
         tags: ['daemon', kind.toLowerCase().replace(/\s+/g, '-')],
-        status: schedule.toLowerCase().includes('retired') ? 'stale' : 'unknown',
+        status,
         idSeed: `daemon-${index}-${name}`,
       });
     })
     .slice(0, LIMITS['daemon-status']);
+}
+
+function readLaunchctlList(): string {
+  try {
+    return execFileSync('launchctl', ['list'], { encoding: 'utf8' });
+  } catch {
+    return '';
+  }
+}
+
+function daemonStatus(label: string, kind: string, schedule: string, launchctlText: string): 'ok' | 'stale' | 'unknown' | 'down' {
+  const normalizedKind = kind.toLowerCase();
+  const normalizedSchedule = schedule.toLowerCase();
+  if (normalizedKind.includes('retired')) return 'stale';
+  if (normalizedKind.includes('cli') || normalizedSchedule.includes('not loaded')) return 'unknown';
+  if (!launchctlText) return 'unknown';
+
+  const line = launchctlText.split('\n').find((entry) => entry.trim().split(/\s+/)[2] === label);
+  if (!line) return 'down';
+  const [pid, exitCode] = line.trim().split(/\s+/);
+  if (pid && pid !== '-') return 'ok';
+  if (normalizedKind.includes('calendar') || normalizedKind.includes('interval')) {
+    return exitCode && exitCode !== '-' && exitCode !== '0' ? 'down' : 'ok';
+  }
+  return exitCode === '0' ? 'stale' : 'down';
+}
+
+function statusLabel(status: 'ok' | 'stale' | 'unknown' | 'down'): string {
+  return { ok: 'OK', stale: 'STALE', unknown: 'UNKNOWN', down: 'DOWN' }[status];
 }
 
 async function main() {
