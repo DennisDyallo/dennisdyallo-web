@@ -12,6 +12,8 @@
     "publish": "bun scripts/publish.ts",
     "dashboard:generate": "bun scripts/generate-vault-dashboard.ts",
     "dashboard:verify-private": "bun scripts/verify-dashboard-privacy.ts",
+    "dashboard:agent": "bun scripts/vault-dashboard-agent.ts",
+    "dashboard:agent:test": "bun scripts/verify-vault-dashboard-agent.ts",
     "astro": "astro"
   },
   "dependencies": {

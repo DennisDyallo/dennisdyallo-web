@@ -35,7 +35,12 @@ const formattedDate = date.toLocaleDateString('en-GB', { month: 'long', day: '2-
 const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 ---
 
-<DashboardLayout title={item.title} description={item.subtitle} canonicalUrl={`https://vault.dyallo.se/dashboard/item/${item.id}`}>
+<DashboardLayout
+  title={item.title}
+  description={item.subtitle}
+  canonicalUrl={`https://vault.dyallo.se/dashboard/item/${item.id}`}
+  agentContext={{ itemId: item.id, title: item.title }}
+>
   <main class="item-shell" data-pagefind-ignore>
     <nav class="crumbs" aria-label="Dashboard breadcrumb">
       <a href="/dashboard">← Vault Quest Log</a>

@@ -125,6 +125,10 @@ Build a context-aware terminal-style AI chat window for the private vault dashbo
 
 - 2026-07-01: conjectured: run OpenCode from website chat for vault edits; refuted by: unrestricted tool access would be too dangerous; learned: the actual feature is a context-aware command bridge with explicit gates; criterion now: context/read/diff/apply/stale states are allowed in v1, commit/deploy are not browser actions.
 
+## Deferred
+
+- Simplify the Caddy/Docker/dashboard boundary. This phase required more Caddy and Docker-adjacent changes than expected: canonical host routing, basic-auth reuse, `/dashboard/agent/*` proxying to a host-loopback service, and `dyallo.se/dashboard*` compatibility redirects. Review whether the services setup can be made more obvious, with fewer duplicated route blocks and a clearer rule for when private site features belong in Caddy versus the Astro repo versus a host launchd service.
+
 ## Verification
 
 Initial Cato status: concerns. Concerns folded into the ISA: document-content prompt injection, OpenCode sandbox assumptions, runtime transcript privacy, and v1 commit/deploy exclusion.

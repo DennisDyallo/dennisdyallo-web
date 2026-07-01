@@ -5,9 +5,13 @@ export interface Props {
   title: string;
   description: string;
   canonicalUrl: string;
+  agentContext?: {
+    itemId?: string;
+    title?: string;
+  };
 }
 
-const { title, description, canonicalUrl } = Astro.props;
+const { title, description, canonicalUrl, agentContext } = Astro.props;
 ---
 
 <!doctype html>
@@ -40,5 +44,312 @@ const { title, description, canonicalUrl } = Astro.props;
   </head>
   <body>
     <slot />
+    <section
+      id="agent-terminal"
+      class="agent-terminal"
+      data-open="false"
+      data-item-id={agentContext?.itemId ?? ''}
+      data-item-title={agentContext?.title ?? ''}
+      aria-label="Vault agent terminal"
+      aria-hidden="true"
+    >
+      <div class="agent-terminal__bar">
+        <div>
+          <strong>RUPICOLA_OPERATOR.EXE</strong>
+          <span id="agent-terminal-state">READONLY</span>
+        </div>
+        <button id="agent-terminal-close" type="button" aria-label="Close agent terminal">×</button>
+      </div>
+      <div class="agent-terminal__body">
+        <aside class="agent-terminal__context" aria-label="Current document context">
+          <p>Context</p>
+          <dl>
+            <div><dt>ID</dt><dd id="agent-context-id">{agentContext?.itemId ?? 'dashboard'}</dd></div>
+            <div><dt>Title</dt><dd id="agent-context-title">{agentContext?.title ?? 'Vault Quest Log'}</dd></div>
+            <div><dt>Path</dt><dd id="agent-context-path">unresolved until ping</dd></div>
+            <div><dt>Render</dt><dd id="agent-context-render">fresh</dd></div>
+          </dl>
+          <div class="agent-terminal__labels" id="agent-terminal-labels">
+            <span>READONLY</span>
+            <span>COMMIT LOCALLY</span>
+          </div>
+        </aside>
+        <div class="agent-terminal__console">
+          <div id="agent-terminal-log" class="agent-terminal__log" aria-live="polite">
+            <p><span>sys</span> Press <kbd>Ctrl</kbd>+<kbd>§</kbd> to toggle. Browser sends item id + selected text only; paths resolve server-side.</p>
+          </div>
+          <form id="agent-terminal-form" class="agent-terminal__form">
+            <label class="sr-only" for="agent-terminal-input">Agent terminal command</label>
+            <span aria-hidden="true">vault&gt;</span>
+            <input id="agent-terminal-input" autocomplete="off" spellcheck="false" placeholder="summarize this note, propose append: ..., or apply" />
+            <button type="submit">RUN</button>
+          </form>
+        </div>
+      </div>
+    </section>
+    <button id="agent-terminal-toggle" class="agent-terminal-toggle" type="button" aria-controls="agent-terminal" aria-expanded="false">Ctrl+§ Agent</button>
+    <script is:inline>
+      const terminal = document.getElementById('agent-terminal');
+      const terminalToggle = document.getElementById('agent-terminal-toggle');
+      const terminalClose = document.getElementById('agent-terminal-close');
+      const terminalForm = document.getElementById('agent-terminal-form');
+      const terminalInput = document.getElementById('agent-terminal-input');
+      const terminalLog = document.getElementById('agent-terminal-log');
+      const terminalState = document.getElementById('agent-terminal-state');
+      const contextId = document.getElementById('agent-context-id');
+      const contextTitle = document.getElementById('agent-context-title');
+      const contextPath = document.getElementById('agent-context-path');
+      const contextRender = document.getElementById('agent-context-render');
+      const contextLabels = document.getElementById('agent-terminal-labels');
+      let lastProposalId = '';
+      let contextLoaded = false;
+
+      function terminalItemId() {
+        return terminal?.dataset.itemId || '';
+      }
+
+      function selectedText() {
+        return String(window.getSelection()?.toString() || '').slice(0, 1200);
+      }
+
+      function setTerminalOpen(open) {
+        if (!terminal) return;
+        terminal.dataset.open = open ? 'true' : 'false';
+        terminal.setAttribute('aria-hidden', open ? 'false' : 'true');
+        terminalToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+          loadTerminalContext();
+          window.setTimeout(() => terminalInput?.focus(), 80);
+        }
+      }
+
+      function appendTerminalLine(role, value, kind = '') {
+        if (!terminalLog) return;
+        const line = document.createElement('p');
+        if (kind) line.dataset.kind = kind;
+        const label = document.createElement('span');
+        label.textContent = role;
+        line.append(label, document.createTextNode(` ${value}`));
+        terminalLog.append(line);
+        terminalLog.scrollTop = terminalLog.scrollHeight;
+      }
+
+      function updateLabels(labels = []) {
+        if (!contextLabels) return;
+        contextLabels.innerHTML = '';
+        for (const label of labels.length ? labels : ['READONLY', 'COMMIT LOCALLY']) {
+          const chip = document.createElement('span');
+          chip.textContent = label;
+          contextLabels.append(chip);
+        }
+        terminalState.textContent = labels[0] || 'READONLY';
+      }
+
+      async function agentRequest(path, payload) {
+        const response = await fetch(`/dashboard/agent/${path}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `agent ${response.status}`);
+        return data;
+      }
+
+      async function loadTerminalContext() {
+        const itemId = terminalItemId();
+        if (!itemId || contextLoaded) return;
+        try {
+          const data = await agentRequest('context', { itemId });
+          contextLoaded = true;
+          contextId.textContent = data.context.id;
+          contextTitle.textContent = data.context.title;
+          contextPath.textContent = data.context.path;
+          contextRender.textContent = data.renderState || 'fresh';
+          updateLabels(data.labels);
+          appendTerminalLine('ctx', `${data.context.title} :: ${data.context.path}`);
+        } catch (error) {
+          appendTerminalLine('err', error.message, 'error');
+        }
+      }
+
+      async function runTerminalCommand(message) {
+        const itemId = terminalItemId();
+        if (!itemId) {
+          appendTerminalLine('sys', 'Open a dashboard item before invoking document-aware operations.', 'error');
+          return;
+        }
+        appendTerminalLine('you', message);
+        try {
+          const isApply = message.trim().toLowerCase() === 'apply';
+          const data = isApply && lastProposalId
+            ? await agentRequest('apply', { proposalId: lastProposalId })
+            : await agentRequest('chat', { itemId, selection: selectedText(), message });
+          if (data.context) {
+            contextPath.textContent = data.context.path;
+            contextRender.textContent = data.renderState || contextRender.textContent;
+          }
+          if (data.proposal?.id) lastProposalId = data.proposal.id;
+          updateLabels(data.labels);
+          appendTerminalLine('agent', data.reply || data.status || 'ok', data.status === 'error' ? 'error' : '');
+          if (data.proposal?.diff) appendTerminalLine('diff', data.proposal.diff);
+          if (data.changedFiles?.length) appendTerminalLine('files', data.changedFiles.join(', '));
+        } catch (error) {
+          appendTerminalLine('err', error.message, 'error');
+        }
+      }
+
+      terminalToggle?.addEventListener('click', () => setTerminalOpen(terminal?.dataset.open !== 'true'));
+      terminalClose?.addEventListener('click', () => setTerminalOpen(false));
+      terminalForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const value = terminalInput?.value.trim();
+        if (!value) return;
+        terminalInput.value = '';
+        runTerminalCommand(value);
+      });
+      document.addEventListener('keydown', (event) => {
+        const quakeKey = event.key === '§' || event.code === 'Backquote';
+        if (!event.ctrlKey || !quakeKey) return;
+        event.preventDefault();
+        setTerminalOpen(terminal?.dataset.open !== 'true');
+      });
+    </script>
+    <style is:global>
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .agent-terminal {
+        position: fixed;
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: min(560px, 72vh);
+        transform: translateY(-105%);
+        transition: transform 180ms ease-out;
+        background:
+          linear-gradient(180deg, rgba(8, 6, 5, 0.98), rgba(27, 21, 17, 0.98)),
+          repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(242, 234, 219, 0.04) 4px);
+        border-bottom: 3px solid #e0531c;
+        box-shadow: 0 24px 90px rgba(0, 0, 0, 0.62), inset 0 -2px 0 rgba(141, 103, 255, 0.45);
+        color: #f2eadb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .agent-terminal[data-open='true'] { transform: translateY(0); }
+
+      .agent-terminal__bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.55rem 0.8rem;
+        background: linear-gradient(90deg, rgba(224, 83, 28, 0.42), rgba(141, 103, 255, 0.32));
+        border-bottom: 1px solid rgba(242, 234, 219, 0.16);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .agent-terminal__bar div { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; }
+      .agent-terminal__bar span { color: #80c56c; }
+      .agent-terminal__bar button,
+      .agent-terminal__form button,
+      .agent-terminal-toggle {
+        cursor: pointer;
+        border: 2px outset rgba(242, 234, 219, 0.22);
+        background: #241a15;
+        color: #f2eadb;
+        font: 900 0.75rem ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .agent-terminal__bar button { width: 2rem; height: 2rem; font-size: 1rem; }
+
+      .agent-terminal__body {
+        display: grid;
+        grid-template-columns: minmax(220px, 330px) 1fr;
+        gap: 0.8rem;
+        height: calc(100% - 3.15rem);
+        padding: 0.8rem;
+      }
+
+      .agent-terminal__context,
+      .agent-terminal__console {
+        min-height: 0;
+        border: 2px solid rgba(141, 103, 255, 0.48);
+        background: rgba(8, 6, 5, 0.78);
+        box-shadow: inset 2px 2px 0 rgba(242, 234, 219, 0.08), inset -2px -2px 0 rgba(0, 0, 0, 0.5);
+      }
+
+      .agent-terminal__context { padding: 0.8rem; overflow: auto; }
+      .agent-terminal__context p { margin: 0 0 0.7rem; color: #d6a85f; text-transform: uppercase; font-weight: 900; letter-spacing: 0.12em; }
+      .agent-terminal__context dl { margin: 0; display: grid; gap: 0.65rem; }
+      .agent-terminal__context div { min-width: 0; }
+      .agent-terminal__context dt { color: #e0531c; font-weight: 900; text-transform: uppercase; font-size: 0.7rem; }
+      .agent-terminal__context dd { margin: 0.12rem 0 0; color: rgba(242, 234, 219, 0.78); overflow-wrap: anywhere; }
+
+      .agent-terminal__labels { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.85rem; }
+      .agent-terminal__labels span { border: 1px solid rgba(128, 197, 108, 0.55); color: #80c56c; padding: 0.12rem 0.35rem; font-size: 0.68rem; }
+
+      .agent-terminal__console { display: grid; grid-template-rows: 1fr auto; }
+      .agent-terminal__log { overflow: auto; padding: 0.85rem; }
+      .agent-terminal__log p { margin: 0 0 0.65rem; white-space: pre-wrap; color: rgba(242, 234, 219, 0.86); line-height: 1.45; }
+      .agent-terminal__log p[data-kind='error'] { color: #ff9aa8; }
+      .agent-terminal__log span { color: #e0531c; font-weight: 900; text-transform: uppercase; }
+      .agent-terminal__log kbd { color: #d6a85f; }
+
+      .agent-terminal__form {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 0.55rem;
+        align-items: center;
+        padding: 0.65rem;
+        border-top: 1px solid rgba(242, 234, 219, 0.12);
+        background: rgba(0, 0, 0, 0.32);
+      }
+
+      .agent-terminal__form span { color: #e0531c; font-weight: 900; }
+      .agent-terminal__form input {
+        min-width: 0;
+        border: 0;
+        outline: none;
+        background: transparent;
+        color: #f2eadb;
+        font: 800 1rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .agent-terminal__form input::placeholder { color: rgba(242, 234, 219, 0.36); }
+      .agent-terminal__form button { padding: 0.42rem 0.62rem; }
+
+      .agent-terminal-toggle {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 900;
+        padding: 0.52rem 0.72rem;
+        box-shadow: 0 10px 34px rgba(0, 0, 0, 0.36);
+      }
+
+      .agent-terminal-toggle:hover,
+      .agent-terminal__form button:hover,
+      .agent-terminal__bar button:hover { background: #e0531c; color: #080605; }
+
+      @media (max-width: 760px) {
+        .agent-terminal { height: 82vh; }
+        .agent-terminal__body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+        .agent-terminal__context dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+    </style>
   </body>
 </html>
