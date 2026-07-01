@@ -26,6 +26,8 @@
     <string>127.0.0.1</string>
     <key>VAULT_DASHBOARD_AGENT_PORT</key>
     <string>3104</string>
+    <key>PAI_BATCH_INFERENCE_PROVIDER</key>
+    <string>claude-inference</string>
   </dict>
   <key>StandardOutPath</key>
   <string>/Users/Dennis.Dyall/Code/other/dyallose/Logs/vault-dashboard-agent.log</string>

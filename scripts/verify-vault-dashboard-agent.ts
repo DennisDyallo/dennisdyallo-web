@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 type AgentProcess = ReturnType<typeof Bun.spawn>;
 
@@ -37,9 +38,10 @@ async function waitForHealth(process: AgentProcess) {
 
 async function main() {
   const tempRoot = await mkdtemp(join(tmpdir(), 'vault-agent-test-'));
-  const vaultDir = join(tempRoot, 'vault');
-  const dataPath = join(tempRoot, 'vault-dashboard.json');
-  const knowledgePath = join(vaultDir, 'Knowledge/Test Note.md');
+    const vaultDir = join(tempRoot, 'vault');
+    const dataPath = join(tempRoot, 'vault-dashboard.json');
+    const inferencePath = join(tempRoot, 'mock-inference.ts');
+    const knowledgePath = join(vaultDir, 'Knowledge/Test Note.md');
   const sourcePath = join(vaultDir, 'sources/Source Note.md');
   let agent: AgentProcess | null = null;
 
@@ -48,6 +50,11 @@ async function main() {
     await mkdir(join(vaultDir, 'sources'), { recursive: true });
     await writeFile(knowledgePath, '# Test Note\n\nOriginal body.\n', 'utf8');
     await writeFile(sourcePath, '# Source Note\n\nImmutable body.\n', 'utf8');
+    await writeFile(
+      inferencePath,
+      `export async function callInference(_system, user) {\n  const nonce = user.match(/NONCE_[a-z0-9-]+/)?.[0];\n  return nonce ? \`MOCK_LLM_\${nonce}\` : 'MOCK_LLM_REPLY';\n}\n`,
+      'utf8',
+    );
     await writeFile(
       dataPath,
       `${JSON.stringify({
@@ -67,6 +74,7 @@ async function main() {
         VAULT_DASHBOARD_AGENT_HOST: '127.0.0.1',
         VAULT_DASHBOARD_VAULT: vaultDir,
         VAULT_DASHBOARD_DATA_PATH: dataPath,
+        VAULT_DASHBOARD_INFERENCE_MODULE: inferencePath,
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -74,6 +82,13 @@ async function main() {
     await waitForHealth(agent);
 
     await request('/dashboard/agent/context', { itemId: 'knowledge-test-note' });
+
+    const nonce = `NONCE_${randomUUID()}`;
+    const llm = await request('/dashboard/agent/chat', {
+      itemId: 'knowledge-test-note',
+      message: `Reply with this nonce if live inference is active: ${nonce}`,
+    });
+    if (llm.reply !== `MOCK_LLM_${nonce}`) throw new Error(`read-only chat did not use inference: ${llm.reply}`);
 
     const diff = await request('/dashboard/agent/chat', { itemId: 'knowledge-test-note', message: 'append: verified temp apply' });
     if (!diff.proposal?.id || !String(diff.proposal.diff || '').includes('verified temp apply')) throw new Error('diff proposal missing expected content');

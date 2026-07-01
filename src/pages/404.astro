@@ -1,0 +1,127 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RupicolaMark from '../components/RupicolaMark.astro';
+
+Astro.response.status = 404;
+---
+
+<BaseLayout
+  title="404"
+  description="The Rupicola found no branch here."
+  canonicalUrl="https://dyallo.se/404"
+>
+  <main class="not-found-shell">
+    <section class="not-found-card" aria-labelledby="not-found-title">
+      <div class="not-found-mark" aria-hidden="true">
+        <RupicolaMark size={168} />
+      </div>
+      <p class="eyebrow">404 / no perch</p>
+      <h1 id="not-found-title">The Rupicola found no branch here.</h1>
+      <p class="lede">
+        Either the path molted, migrated, or never existed. The bird checked the canopy twice.
+      </p>
+      <nav class="not-found-actions" aria-label="Recovery links">
+        <a href="/">Return home</a>
+        <a href="/now">See what is alive</a>
+      </nav>
+    </section>
+  </main>
+
+  <style>
+    .not-found-shell {
+      min-height: calc(100vh - 4.5rem);
+      display: grid;
+      place-items: center;
+      padding: var(--space-3xl) var(--space-lg);
+      background:
+        radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 30rem),
+        radial-gradient(circle at 82% 78%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 26rem),
+        var(--bg);
+    }
+
+    .not-found-card {
+      position: relative;
+      width: min(100%, 760px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: clamp(var(--space-xl), 7vw, var(--space-4xl));
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      box-shadow: var(--shadow-elevated);
+      overflow: hidden;
+    }
+
+    .not-found-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-top: 3px solid var(--primary);
+      pointer-events: none;
+    }
+
+    .not-found-mark {
+      color: var(--primary);
+      margin-bottom: var(--space-lg);
+      line-height: 0;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: var(--type-small);
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-sm);
+    }
+
+    h1 {
+      max-width: 9ch;
+      font-size: clamp(3rem, 10vw, 6rem);
+      line-height: 0.92;
+      letter-spacing: -0.055em;
+      margin-bottom: var(--space-lg);
+    }
+
+    .lede {
+      max-width: 44ch;
+      color: var(--muted);
+      font-family: var(--font-serif);
+      font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+      line-height: 1.45;
+    }
+
+    .not-found-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-top: var(--space-xl);
+    }
+
+    .not-found-actions a {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      color: var(--ink);
+      font-size: var(--type-small);
+      text-decoration: none;
+    }
+
+    .not-found-actions a:first-child {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .not-found-actions a:hover {
+      opacity: 1;
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    @media (max-width: 640px) {
+      .not-found-mark :global(.rupicola-mark) {
+        height: 128px !important;
+      }
+    }
+  </style>
+</BaseLayout>
