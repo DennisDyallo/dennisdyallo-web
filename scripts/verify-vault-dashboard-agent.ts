@@ -38,17 +38,24 @@ async function waitForHealth(process: AgentProcess) {
 
 async function main() {
   const tempRoot = await mkdtemp(join(tmpdir(), 'vault-agent-test-'));
-    const vaultDir = join(tempRoot, 'vault');
-    const dataPath = join(tempRoot, 'vault-dashboard.json');
-    const inferencePath = join(tempRoot, 'mock-inference.ts');
-    const knowledgePath = join(vaultDir, 'Knowledge/Test Note.md');
+  const vaultDir = join(tempRoot, 'vault');
+  const dataPath = join(tempRoot, 'vault-dashboard.json');
+  const inferencePath = join(tempRoot, 'mock-inference.ts');
+  const knowledgePath = join(vaultDir, 'Knowledge/Test Note.md');
+  const deployNotesPath = join(vaultDir, 'Knowledge/deploy notes.md');
+  const movePath = join(vaultDir, 'Projects/Move Me.md');
+  const moveToPath = join(vaultDir, 'Projects/How to Cook.md');
   const sourcePath = join(vaultDir, 'sources/Source Note.md');
   let agent: AgentProcess | null = null;
 
   try {
     await mkdir(join(vaultDir, 'Knowledge'), { recursive: true });
+    await mkdir(join(vaultDir, 'Projects'), { recursive: true });
     await mkdir(join(vaultDir, 'sources'), { recursive: true });
     await writeFile(knowledgePath, '# Test Note\n\nOriginal body.\n', 'utf8');
+    await writeFile(deployNotesPath, '# Deploy Notes\n\nDeployment checklist.\n', 'utf8');
+    await writeFile(movePath, '# Move Me\n\nMove body.\n', 'utf8');
+    await writeFile(moveToPath, '# How to Cook\n\nMove body with to in filename.\n', 'utf8');
     await writeFile(sourcePath, '# Source Note\n\nImmutable body.\n', 'utf8');
     await writeFile(
       inferencePath,
@@ -90,6 +97,45 @@ async function main() {
     });
     if (llm.reply !== `MOCK_LLM_${nonce}`) throw new Error(`read-only chat did not use inference: ${llm.reply}`);
 
+    const found = await request('/dashboard/agent/chat', { message: 'find: Test Note' });
+    if (!found.results?.some((item: any) => item.path === 'Knowledge/Test Note.md')) throw new Error('explicit find did not return fixture');
+    const deployFound = await request('/dashboard/agent/chat', { message: 'find: deploy notes' });
+    if (!deployFound.results?.some((item: any) => item.path === 'Knowledge/deploy notes.md')) {
+      throw new Error('explicit find was blocked by deploy keyword gate');
+    }
+
+    const read = await request('/dashboard/agent/chat', { message: 'read: Knowledge/Test Note.md' });
+    if (!read.file?.hash || !String(read.reply).includes('Original body')) throw new Error('explicit read did not return content/hash');
+
+    const replace = await request('/dashboard/agent/chat', { message: 'replace in Knowledge/Test Note.md: Original body => Changed body' });
+    if (!replace.proposal?.id || !String(replace.proposal.diff || '').includes('+Changed body')) throw new Error('explicit replace proposal missing diff');
+    if ((await readFile(knowledgePath, 'utf8')).includes('Changed body')) throw new Error('explicit replace mutated before apply');
+    const appliedReplace = await request('/dashboard/agent/apply', { proposalId: replace.proposal.id });
+    if (!appliedReplace.changedFiles?.includes('Knowledge/Test Note.md')) throw new Error('explicit replace apply did not report changed file');
+    if (!(await readFile(knowledgePath, 'utf8')).includes('Changed body')) throw new Error('explicit replace did not mutate after apply');
+
+    const literalDollar = await request('/dashboard/agent/chat', { message: 'replace in Knowledge/Test Note.md: Changed body => Literal $& replacement' });
+    if (!literalDollar.proposal?.id || !String(literalDollar.proposal.diff || '').includes('+Literal $& replacement')) {
+      throw new Error('explicit replace dollar proposal missing literal diff');
+    }
+    await request('/dashboard/agent/apply', { proposalId: literalDollar.proposal.id });
+    const dollarContent = await readFile(knowledgePath, 'utf8');
+    if (!dollarContent.includes('Literal $& replacement')) throw new Error('explicit replace did not preserve literal dollar replacement');
+    if (dollarContent.includes('Literal Changed body replacement')) throw new Error('explicit replace interpreted dollar replacement tokens');
+    await writeFile(knowledgePath, `${await readFile(knowledgePath, 'utf8')}\nRepeat me. Repeat me.\n`, 'utf8');
+    await request('/dashboard/agent/chat', { message: 'replace in Knowledge/Test Note.md: Repeat me => Once' }, 409);
+
+    const move = await request('/dashboard/agent/chat', { message: 'move Projects/Move Me.md to Archive/Move Me.md' });
+    if (!move.proposal?.id || !String(move.proposal.diff || '').includes('rename to Archive/Move Me.md')) throw new Error('explicit move proposal missing diff');
+    const appliedMove = await request('/dashboard/agent/apply', { proposalId: move.proposal.id });
+    if (!appliedMove.changedFiles?.includes('Archive/Move Me.md')) throw new Error('explicit move apply did not report destination');
+    if (!(await readFile(join(vaultDir, 'Archive/Move Me.md'), 'utf8')).includes('Move body')) throw new Error('explicit move destination missing content');
+
+    const moveWithTo = await request('/dashboard/agent/chat', { message: 'move Projects/How to Cook.md to Archive/Cooked.md' });
+    if (!moveWithTo.proposal?.id || !String(moveWithTo.proposal.diff || '').includes('rename from Projects/How to Cook.md')) {
+      throw new Error('explicit move misparsed source path containing " to "');
+    }
+
     const diff = await request('/dashboard/agent/chat', { itemId: 'knowledge-test-note', message: 'append: verified temp apply' });
     if (!diff.proposal?.id || !String(diff.proposal.diff || '').includes('verified temp apply')) throw new Error('diff proposal missing expected content');
     const applied = await request('/dashboard/agent/apply', { proposalId: diff.proposal.id });
@@ -102,9 +148,16 @@ async function main() {
     await request('/dashboard/agent/apply', { proposalId: drift.proposal.id }, 409);
 
     await request('/dashboard/agent/chat', { itemId: 'source-test-note', message: 'append: reject source write' }, 403);
+    await request('/dashboard/agent/chat', { message: 'replace in sources/Source Note.md: Immutable => Mutated' }, 403);
+    await request('/dashboard/agent/chat', { message: 'move sources/Source Note.md to Knowledge/Source Note.md' }, 403);
+    await request('/dashboard/agent/chat', { message: 'move Knowledge/Test Note.md to Sources/Test Note.md' }, 403);
+    await request('/dashboard/agent/chat', { message: 'move Knowledge/Test Note.md to ../outside.md' }, 403);
     const sourceContent = await readFile(sourcePath, 'utf8');
     if (sourceContent.includes('reject source write')) throw new Error('source note was mutated');
 
+    await request('/dashboard/agent/chat', { message: 'rm -rf Knowledge' }, 400);
+    await request('/dashboard/agent/chat', { message: 'find: ../outside' }, 403);
+    await request('/dashboard/agent/chat', { message: 'read: ../outside.md' }, 403);
     await request('/dashboard/agent/context', { itemId: '../etc/passwd' }, 404);
 
     const csrfResponse = await fetch(`${BASE_URL}/dashboard/agent/context`, {

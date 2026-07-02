@@ -81,7 +81,7 @@ const { title, description, canonicalUrl, agentContext } = Astro.props;
           <form id="agent-terminal-form" class="agent-terminal__form">
             <label class="sr-only" for="agent-terminal-input">Agent terminal command</label>
             <span aria-hidden="true">vault&gt;</span>
-            <input id="agent-terminal-input" autocomplete="off" spellcheck="false" placeholder="summarize this note, propose append: ..., or apply" />
+            <input id="agent-terminal-input" autocomplete="off" spellcheck="false" placeholder="find: query, read: path, replace in path: old => new, move old to new, or apply" />
             <button type="submit">RUN</button>
           </form>
         </div>
@@ -175,8 +175,9 @@ const { title, description, canonicalUrl, agentContext } = Astro.props;
 
       async function runTerminalCommand(message) {
         const itemId = terminalItemId();
-        if (!itemId) {
-          appendTerminalLine('sys', 'Open a dashboard item before invoking document-aware operations.', 'error');
+        const explicitCommand = /^(find:|read:|replace\s+in\s+|move\s+.+\s+to\s+|apply$)/i.test(message.trim());
+        if (!itemId && !explicitCommand) {
+          appendTerminalLine('sys', 'Open a dashboard item for chat, or use find:/read:/replace/move/apply.', 'error');
           return;
         }
         appendTerminalLine('you', message);

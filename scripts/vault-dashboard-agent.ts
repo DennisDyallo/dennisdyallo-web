@@ -1,7 +1,16 @@
-import { createHash, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { isAbsolute, join, normalize, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {
+  FileToolError,
+  applyFileToolProposal,
+  findVaultFiles,
+  proposeAppend,
+  proposeMove,
+  proposeReplace,
+  readVaultFile,
+  type FileToolProposal,
+} from './vault-dashboard-file-tools';
 
 type DashboardItem = {
   id: string;
@@ -14,16 +23,7 @@ type DashboardItem = {
   summary?: { summary?: string; key_points?: string[]; action_items?: string[] };
 };
 
-type Proposal = {
-  id: string;
-  itemId: string;
-  path: string;
-  normalizedPath: string;
-  fullPath: string;
-  appendText: string;
-  expectedHash: string;
-  createdAt: string;
-};
+type PendingProposal = { proposal: FileToolProposal; itemId?: string };
 
 type CallInference = (
   systemPrompt: string,
@@ -45,7 +45,7 @@ const INFERENCE_TIMEOUT_MS = Number(process.env.VAULT_DASHBOARD_INFERENCE_TIMEOU
 const MAX_INFERENCE_CHARS = Number(process.env.VAULT_DASHBOARD_MAX_INFERENCE_CHARS || 12000);
 const AGENT_READONLY = process.env.VAULT_DASHBOARD_AGENT_READONLY === 'true';
 const ALLOWED_ORIGINS = new Set(['https://vault.dyallo.se', 'http://localhost:4321', 'http://127.0.0.1:4321']);
-const proposals = new Map<string, Proposal>();
+const proposals = new Map<string, PendingProposal>();
 let callInferencePromise: Promise<CallInference> | undefined;
 
 class HttpError extends Error {
@@ -53,8 +53,6 @@ class HttpError extends Error {
     super(String(payload.error || 'Agent request failed'));
   }
 }
-
-const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 
 function json(data: unknown, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -194,9 +192,78 @@ function patchTextFor(message: string) {
   return `\n\n## Agent Terminal Note - ${new Date().toISOString()}\n\n${text}\n`;
 }
 
-function makeAppendDiff(path: string, before: string, appendText: string) {
-  const tail = before.split('\n').slice(-6).join('\n');
-  return [`--- a/${path}`, `+++ b/${path}`, '@@ append @@', tail, appendText.trimEnd()].join('\n');
+type ParsedToolCommand =
+  | { kind: 'find'; query: string }
+  | { kind: 'read'; path: string }
+  | { kind: 'replace'; path: string; find: string; replace: string }
+  | { kind: 'move'; fromPath: string; toPath: string };
+
+function parseToolCommand(message: string): ParsedToolCommand | null {
+  const trimmed = message.trim();
+  const find = trimmed.match(/^find:\s*([\s\S]+)$/i);
+  if (find?.[1]?.trim()) return { kind: 'find', query: find[1].trim() };
+
+  const read = trimmed.match(/^read:\s*([\s\S]+)$/i);
+  if (read?.[1]?.trim()) return { kind: 'read', path: read[1].trim() };
+
+  const replace = trimmed.match(/^replace\s+in\s+(.+?):\s*([\s\S]+?)\s*=>\s*([\s\S]+)$/i);
+  if (replace?.[1]?.trim() && replace[2] !== undefined && replace[3] !== undefined) {
+    return { kind: 'replace', path: replace[1].trim(), find: replace[2], replace: replace[3] };
+  }
+
+  const move = trimmed.match(/^move\s+([\s\S]+)\s+to\s+([\s\S]+)$/i);
+  if (move?.[1]?.trim() && move[2]?.trim()) return { kind: 'move', fromPath: move[1].trim(), toPath: move[2].trim() };
+
+  return null;
+}
+
+function optionalContext(item?: DashboardItem) {
+  return item ? contextFor(item) : undefined;
+}
+
+async function handleToolCommand(command: ParsedToolCommand, item?: DashboardItem) {
+  if (command.kind === 'find') {
+    const results = await findVaultFiles(VAULT_DIR, command.query);
+    return json({
+      context: optionalContext(item),
+      labels: labelsFor('READONLY'),
+      renderState: 'fresh',
+      reply: results.length ? results.map((result) => result.path).join('\n') : 'No matching markdown files found.',
+      results,
+    });
+  }
+
+  if (command.kind === 'read') {
+    const file = await readVaultFile(VAULT_DIR, command.path);
+    return json({
+      context: optionalContext(item),
+      labels: labelsFor('READONLY'),
+      renderState: 'fresh',
+      reply: file.content,
+      file,
+    });
+  }
+
+  if (AGENT_READONLY) {
+    return json({
+      context: optionalContext(item),
+      labels: labelsFor('READONLY', true),
+      renderState: 'fresh',
+      reply: 'Write kill switch is enabled; read/find are available, but replace/move/apply are disabled.',
+    }, 403);
+  }
+
+  const proposal = command.kind === 'replace'
+    ? await proposeReplace(VAULT_DIR, command.path, command.find, command.replace)
+    : await proposeMove(VAULT_DIR, command.fromPath, command.toPath);
+  proposals.set(proposal.id, { proposal, itemId: item?.id });
+  return json({
+    context: optionalContext(item),
+    labels: labelsFor('DIFF READY', false),
+    renderState: 'fresh',
+    reply: `Diff ready. Type apply to ${proposal.kind} this change. No commit or deploy will run from the browser.`,
+    proposal: { id: proposal.id, createdAt: proposal.createdAt, diff: proposal.diff },
+  });
 }
 
 async function handleContext(req: Request) {
@@ -210,16 +277,24 @@ async function handleChat(req: Request) {
   const message = typeof body.message === 'string' ? body.message.slice(0, 4000) : '';
   const selection = typeof body.selection === 'string' ? body.selection.slice(0, 1200) : '';
   if (!message.trim()) return json({ error: 'Message is required' }, 400);
-  const { item, fullPath, normalizedPath } = await resolveItem(body.itemId);
+  const hasItemId = typeof body.itemId === 'string' && body.itemId.trim() !== '';
+  const resolved = hasItemId ? await resolveItem(body.itemId) : undefined;
+  const item = resolved?.item;
+
+  const toolCommand = parseToolCommand(message);
+  if (toolCommand) return await handleToolCommand(toolCommand, item);
 
   if (/\b(commit|deploy|push)\b/i.test(message)) {
     return json({
-      context: contextFor(item),
+      context: optionalContext(item),
       labels: labelsFor('READONLY'),
       renderState: 'fresh',
       reply: 'Commit, push, and deploy are blocked in v1. Review/apply diffs here, then commit/deploy locally.',
     });
   }
+
+  if (!resolved) return json({ error: 'Open a dashboard item for document-aware chat, or use an explicit command: find:, read:, replace in ..., move ... to ...' }, 400);
+  const { fullPath, normalizedPath } = resolved;
 
   if (!wantsWrite(message)) {
     const reply = await answerWithInference(item, fullPath, normalizedPath, message, selection);
@@ -244,43 +319,41 @@ async function handleChat(req: Request) {
     }, 403);
   }
 
-  const before = await Bun.file(fullPath).text();
   const appendText = patchTextFor(message);
-  const proposal: Proposal = { id: randomUUID(), itemId: item.id, path: item.path, normalizedPath, fullPath, appendText, expectedHash: hash(before), createdAt: new Date().toISOString() };
-  proposals.set(proposal.id, proposal);
+  const proposal = await proposeAppend(VAULT_DIR, normalizedPath, appendText);
+  proposals.set(proposal.id, { proposal, itemId: item.id });
   return json({
     context: contextFor(item),
     labels: labelsFor('DIFF READY', false),
     renderState: 'fresh',
     reply: 'Diff ready. Type apply to append this bounded note. No commit or deploy will run from the browser.',
-    proposal: { id: proposal.id, createdAt: proposal.createdAt, diff: makeAppendDiff(item.path, before, appendText) },
+    proposal: { id: proposal.id, createdAt: proposal.createdAt, diff: proposal.diff },
   });
 }
 
 async function handleApply(req: Request) {
   const body = await readBody(req);
   const proposalId = typeof body.proposalId === 'string' ? body.proposalId : '';
-  const proposal = proposals.get(proposalId);
-  if (!proposal) return json({ error: 'No pending proposal found' }, 404);
+  const pending = proposals.get(proposalId);
+  if (!pending) return json({ error: 'No pending proposal found' }, 404);
   if (AGENT_READONLY) return json({ error: 'Write kill switch is enabled' }, 403);
-  if (isImmutableSourcePath(proposal.normalizedPath)) return json({ error: 'Sources/ is immutable by default' }, 403);
 
-  const { item } = await resolveItem(proposal.itemId);
-  const before = await Bun.file(proposal.fullPath).text();
-  if (hash(before) !== proposal.expectedHash) {
-    proposals.delete(proposalId);
-    return json({ error: 'File changed since diff was proposed; regenerate a fresh diff' }, 409);
+  const item = pending.itemId ? (await resolveItem(pending.itemId)).item : undefined;
+  let applied: Awaited<ReturnType<typeof applyFileToolProposal>>;
+  try {
+    applied = await applyFileToolProposal(VAULT_DIR, pending.proposal);
+  } catch (error) {
+    if (error instanceof FileToolError && error.status === 409) proposals.delete(proposalId);
+    throw error;
   }
-
-  await Bun.write(proposal.fullPath, before + proposal.appendText);
   proposals.delete(proposalId);
   return json({
-    context: contextFor(item),
+    context: optionalContext(item),
     labels: labelsFor('APPLIED', false),
-    renderState: 'stale',
+    renderState: applied.renderState,
     status: 'applied',
     reply: 'Applied to the vault working tree. Dashboard render is now stale; rebuild/deploy locally when ready. No commit or deploy was run.',
-    changedFiles: [proposal.path],
+    changedFiles: applied.changedFiles,
   });
 }
 
@@ -301,6 +374,7 @@ Bun.serve({
       return json({ error: 'Not found' }, 404);
     } catch (error) {
       if (error instanceof HttpError) return json(error.payload, error.status);
+      if (error instanceof FileToolError) return json({ error: error.message }, error.status);
       console.error(JSON.stringify({ level: 'error', message: error instanceof Error ? error.message : 'Unexpected agent error' }));
       return json({ error: 'Unexpected agent error' }, 500);
     }

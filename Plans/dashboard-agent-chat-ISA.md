@@ -28,8 +28,8 @@ This phase does not expose arbitrary shell access, public chat, multi-user colla
 - Quake-style means a top-docked drop-down terminal overlay: it slides over the current page, preserves document context beneath it, has a strong terminal prompt aesthetic, and closes without navigation.
 - The chat service must bind to loopback only and be reachable publicly only through Caddy basic-auth protected `/dashboard/agent/*` routes.
 - `vault.dyallo.se/dashboard/` is the only canonical dashboard URL. `dyallo.se/dashboard*` must not serve or redirect to the dashboard; it should return the public site's custom 404.
-- Browser clients may pass only item ids, selections, and chat messages; they may not pass filesystem paths for direct reads/writes.
-- Server-side context resolution must use a strict allowlist from dashboard data or a server-side manifest.
+- Item-context chat requests may pass only item ids, selections, and chat messages; the backend resolves document paths from a strict allowlist.
+- V2 explicit file-tool commands may include vault-relative paths only inside service-owned command grammar; the backend must reject absolute paths, traversal, `Sources/` mutations, unbounded shell-like commands, and writes without explicit apply.
 - Read-only chat must invoke the canonical PAI inference wrapper, not only echo precomputed dashboard summaries.
 - V1 read-only LLM chat is inference-only. It does not invoke OpenCode's tool loop, shell tools, or arbitrary filesystem tools; the only write-capable operations in v1 are service-owned diff/apply handlers.
 - The launchd dashboard agent pins `PAI_BATCH_INFERENCE_PROVIDER=claude-inference` so the private dashboard does not silently break when the global PAI runtime is switched to an unavailable provider.
@@ -75,6 +75,12 @@ Build a context-aware terminal-style AI chat window for the private vault dashbo
 - [x] ISC-26: Read-only chat invokes PAI `callInference(...)` and returns a request-specific, semantic response over the current item rather than the old Auto Brief echo. A nonce probe alone is not sufficient proof of model reasoning; it is one check in the combined evidence.
 - [ ] ISC-27: The future file-changing path is implemented as a bounded tool/harness iteration: find/read/propose patch/move/apply are service-owned operations, not freeform shell access.
 - [x] ISC-28: The privacy boundary for read-only chat explicitly states that bounded vault excerpts leave the machine via the configured PAI cloud inference provider.
+- [ ] ISC-29: A local file-tool harness can find vault files by query without shelling out and without returning paths outside the vault.
+- [ ] ISC-30: The file-tool harness can propose bounded replace edits with expected-hash drift protection and no immediate mutation.
+- [ ] ISC-31: The file-tool harness can propose vault-relative moves with destination safety checks, parent directory creation, and expected-hash drift protection.
+- [ ] ISC-32: The browser terminal exposes only harness-backed file commands for v2 (`find:`, `read:`, `replace in`, `move ... to ...`, `apply`), with vault-relative path validation and no arbitrary filesystem paths or shell execution.
+- [ ] ISC-33: The dashboard has a `Messages` activity lane sourced from immutable `Sources/Messages` day-files, with `type:message`/`type:messages` search support and inline message bodies visible on the private dashboard.
+- [ ] ISC-34: Right-column side-panel headers are clickable filter controls that populate and focus the expression editor without navigating away or forced scrolling.
 
 ## Features
 
@@ -90,6 +96,10 @@ Build a context-aware terminal-style AI chat window for the private vault dashbo
 | Canonical-only dashboard host | Keeps the dashboard solely on `vault.dyallo.se/dashboard/`; public `dyallo.se/dashboard*` receives the site's custom 404. | ISC-25 | Caddy + public 404 page | false |
 | Live LLM read chat | Sends bounded document context and the user's question through PAI `callInference(...)` for read-only answers. | ISC-6, ISC-17, ISC-19, ISC-26 | agent service | false |
 | File-tool harness | Future iteration for user requests like find/change/move files via typed, validated tool operations rather than arbitrary shell. | ISC-27, Anti-ISC-21, Anti-ISC-23 | agent service + write gate | false |
+| File harness CLI | Local CLI for `find`, `read`, `replace`, and `move` against temp or real vaults using the same service-owned validation as the browser route. | ISC-29, ISC-30, ISC-31 | file-tool harness | false |
+| Browser harness commands | Minimal terminal command grammar that routes file operations to the harness without granting shell access. | ISC-32, Anti-ISC-21, Anti-ISC-23 | file harness CLI | false |
+| Messages lane | Dashboard lane and side panel for Message-Sync day-files under `Sources/Messages`, using message dates for activity order and sync timestamps as metadata. | ISC-33 | dashboard generator + dashboard UI | false |
+| Side-panel header filters | Oracle Says, Companions, Message Sync, Active Campaigns, and Daemon Party headers act as expression-editor filter shortcuts. | ISC-34 | dashboard search UI | false |
 
 ## Test Strategy
 
@@ -123,6 +133,12 @@ Build a context-aware terminal-style AI chat window for the private vault dashbo
 | ISC-26 | integration | Ask read-only chat for a per-request nonce and a semantic summary of the current item. | response passes through inference and is not the old Auto Brief echo; nonce is supporting evidence only | test/curl/browser |
 | ISC-27 | design/build | Implement and test the future file-tool harness. | future file operations require an enforced harness/tool registry | Cato/read/test |
 | ISC-28 | privacy | Review prompt construction and constraints. | external cloud inference boundary is explicit and bounded by max context chars | read/Cato |
+| ISC-29 | harness | Run `find` against temp vault. | matching files returned; traversal/external paths rejected | test/CLI |
+| ISC-30 | harness | Propose replace, inspect file before apply, then apply. | diff returned before mutation; stale hash rejects drift | test/CLI |
+| ISC-31 | harness | Propose move, inspect file tree before apply, then apply. | no mutation before apply; destination created under vault only | test/CLI |
+| ISC-32 | integration | Send browser/API file commands and shell-like commands. | harness commands work; arbitrary shell/path commands reject | test/curl/browser |
+| ISC-33 | generator/UI | Generate dashboard from a vault containing `Sources/Messages` files and inspect dashboard counts/search. | message count is nonzero; latest message day-files render; `type:message` and `type:messages` filter them; inline private message bodies are visible | generate/build/read |
+| ISC-34 | browser/UI | Click each right-column panel header. | expression editor becomes `type:sias-lens`, `type:conversation`, `type:message`, `type:project`, or `type:daemon-status`; input receives focus; no row navigation occurs | browser/test |
 
 ## Decisions
 
@@ -139,6 +155,9 @@ Build a context-aware terminal-style AI chat window for the private vault dashbo
 - 2026-07-01: `/Sia` consultation attempt from OpenCode failed because `CLAUDE_CODE_SESSION_ID` was unavailable for Persona Mode scoping. Unverified Sia-style design note: the proud version is not “chatbot on the website”; it is a bounded command bridge with ritualized power: context, diff, approval, and render freshness. If it cannot show what it changed and how to undo it, it is not ready.
 - 2026-07-01: Dennis rejected keeping `dyallo.se/dashboard*` as a compatibility redirect. The dashboard must exist only on `vault.dyallo.se/dashboard/`; public dashboard paths should fall into the public 404 experience.
 - 2026-07-01: Dennis identified that v1 chat only echoed Auto Brief summaries. Real read-only chat must call PAI inference now; broader file operations remain a later harness/tool iteration.
+- 2026-07-01: V2 starts with explicit harness commands rather than freeform LLM tool autonomy. The immediate win is mechanical capability and tests for find/read/replace/move/apply; later iterations can let the LLM choose these tools after Cato review.
+- 2026-07-02: Messages lane should show Message-Sync day-files as immutable activity items. Cato flagged that message `date` is the right activity sort key while `synced_at` belongs in metadata, and that message previews should be bounded to avoid bloating private static JSON.
+- 2026-07-02: Dennis clarified that the private dashboard should show message bodies despite the static-export privacy caution. The right-column panel headers should also behave like expression-editor shortcuts, matching lane-card behavior.
 
 ## Changelog
 
@@ -149,7 +168,7 @@ Build a context-aware terminal-style AI chat window for the private vault dashbo
 ## Deferred
 
 - Simplify the Caddy/Docker/dashboard boundary. This phase required more Caddy and Docker-adjacent changes than expected: canonical host routing, basic-auth reuse, `/dashboard/agent/*` proxying to a host-loopback service, and explicit public 404 handling for `dyallo.se/dashboard*`. Review whether the services setup can be made more obvious, with fewer duplicated route blocks and a clearer rule for when private site features belong in Caddy versus the Astro repo versus a host launchd service.
-- Design the file-tool harness for requests like “find these files, change them, and move them here.” The likely direction is a small typed tool registry and CLI harness (`findVaultFiles`, `readVaultFile`, `proposePatch`, `proposeMove`, `applyProposal`) with path allowlists, hash checks, immutable `Sources/`, and explicit apply; avoid exposing shell as the primitive.
+- Extend the file-tool harness from explicit command grammar to LLM-selected tools after the typed operations are stable. The tool registry shape is `findVaultFiles`, `readVaultFile`, `proposePatch`, `proposeMove`, `applyProposal`; keep path allowlists, hash checks, immutable `Sources/`, and explicit apply; avoid exposing shell as the primitive.
 
 ## Verification
 

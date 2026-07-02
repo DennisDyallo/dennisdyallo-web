@@ -8,6 +8,7 @@ type ActivityType =
   | 'ingestion'
   | 'journal'
   | 'dream'
+  | 'message'
   | 'conversation'
   | 'project'
   | 'knowledge'
@@ -47,6 +48,7 @@ const lanes: Array<{ type: ActivityType; label: string; glyph: string; hint: str
   { type: 'ingestion', label: 'Ingestions', glyph: '▣', hint: 'New vault loot' },
   { type: 'journal', label: 'Journal', glyph: '✎', hint: 'Captain logs' },
   { type: 'dream', label: 'Dream Realm', glyph: '☾', hint: 'Night signals' },
+  { type: 'message', label: 'Messages', glyph: '✉', hint: 'Message Sync' },
   { type: 'conversation', label: 'Conversations', glyph: '☵', hint: 'Companions' },
   { type: 'project', label: 'Projects', glyph: '⚔', hint: 'Campaigns' },
   { type: 'knowledge', label: 'Knowledge', glyph: '✦', hint: 'Codex' },
@@ -57,6 +59,7 @@ const lanes: Array<{ type: ActivityType; label: string; glyph: string; hint: str
 const counts = lanes.map((lane) => ({ ...lane, count: items.filter((item) => item.type === lane.type).length }));
 const latestLens = items.find((item) => item.type === 'sias-lens');
 const conversations = items.filter((item) => item.type === 'conversation').slice(0, 4);
+const messages = items.filter((item) => item.type === 'message').slice(0, 5);
 const projects = items.filter((item) => item.type === 'project').slice(0, 5);
 const daemons = items.filter((item) => item.type === 'daemon-status').slice(0, 10);
 function isPeopleDossier(item: ActivityItem) {
@@ -126,7 +129,7 @@ function typeLabel(type: ActivityType) {
           <p class="eyebrow">Vault command center</p>
           <h1 id="dashboard-title">Vault Quest Log</h1>
           <p class="hero-copy">
-            Recent activity, companion conversations, dream realm signals, daemon party frames, and Sia's oracle updates in one private retro console.
+            Recent activity, message-sync drops, companion conversations, dream realm signals, daemon party frames, and Sia's oracle updates in one private retro console.
           </p>
         </div>
         <div class="save-stats" aria-label="Vault stats">
@@ -150,12 +153,12 @@ function typeLabel(type: ActivityType) {
           type="search"
           autocomplete="off"
           spellcheck="false"
-          placeholder='type:dream "snake" after:2026-06 or watashi attraction'
+          placeholder='type:message whatsapp after:2026-06 or watashi attraction'
         />
         <button id="clear-search" type="button">CLR</button>
       </div>
       <p class="search-help">
-        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:lens</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
+        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:message</code>, <code>type:lens</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
       </p>
       <div id="search-results" class="search-results" aria-live="polite"></div>
     </section>
@@ -203,7 +206,7 @@ function typeLabel(type: ActivityType) {
 
       <aside class="side-panels" aria-label="Dashboard side panels">
         <section class="side-panel oracle">
-          <div class="panel-title">Oracle Says</div>
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:sias-lens" aria-pressed="false">Oracle Says</button>
           {latestLens ? (
             <a href={latestLens.sourceUrl}>
               <time datetime={latestLens.timestamp}>{formatDate(latestLens.timestamp)}</time>
@@ -214,7 +217,7 @@ function typeLabel(type: ActivityType) {
         </section>
 
         <section class="side-panel">
-          <div class="panel-title">Companions</div>
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:conversation" aria-pressed="false">Companions</button>
           {conversations.map((item) => (
             <a class="mini-row" href={item.sourceUrl}>
               <span class="avatar">{item.person === 'watashi' ? 'W' : 'O'}</span>
@@ -224,7 +227,17 @@ function typeLabel(type: ActivityType) {
         </section>
 
         <section class="side-panel">
-          <div class="panel-title">Active Campaigns</div>
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:message" aria-pressed="false">Message Sync</button>
+          {messages.map((item) => (
+            <a class="mini-row" href={item.sourceUrl}>
+              <span class="avatar">✉</span>
+              <span><strong>{item.title}</strong><em>{item.subtitle}</em></span>
+            </a>
+          ))}
+        </section>
+
+        <section class="side-panel">
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:project" aria-pressed="false">Active Campaigns</button>
           {projects.map((item) => (
             <a class="mini-row" href={item.sourceUrl}>
               <span class="pixel-dot"></span>
@@ -234,7 +247,7 @@ function typeLabel(type: ActivityType) {
         </section>
 
         <section class="side-panel daemon-panel">
-          <div class="panel-title">Daemon Party</div>
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:daemon-status" aria-pressed="false">Daemon Party</button>
           {daemons.map((item) => (
             <a class="daemon-row" href={item.sourceUrl}>
               <span class:list={['health', item.status === 'down' ? 'down' : item.status === 'stale' ? 'stale' : item.status === 'unknown' ? 'unknown' : 'ok']}></span>
@@ -259,6 +272,7 @@ function typeLabel(type: ActivityType) {
       ingestion: 'Ingestion',
       journal: 'Journal',
       dream: 'Dream',
+      message: 'Messages',
       conversation: 'Conversation',
       project: 'Project',
       knowledge: 'Knowledge',
@@ -285,7 +299,7 @@ function typeLabel(type: ActivityType) {
 
     function matchesFilters(item, filters) {
       if (filters.type) {
-        const aliases = { lens: 'sias-lens', dreams: 'dream', ingestions: 'ingestion', daemon: 'daemon-status' };
+        const aliases = { lens: 'sias-lens', dreams: 'dream', messages: 'message', ingestions: 'ingestion', daemon: 'daemon-status' };
         const wanted = aliases[filters.type] || filters.type;
         if (!item.type.includes(wanted)) return false;
       }
@@ -454,7 +468,24 @@ function typeLabel(type: ActivityType) {
       }).join('');
     }
 
-    input?.addEventListener('input', () => renderResults(input.value));
+    function updatePanelTitleState(query) {
+      const normalizedQuery = query.trim();
+      document.querySelectorAll('[data-panel-query]').forEach((button) => {
+        const active = button.getAttribute('data-panel-query') === normalizedQuery;
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        button.dataset.active = active ? 'true' : 'false';
+      });
+    }
+
+    function setSearchExpression(query) {
+      if (!input) return;
+      input.value = query;
+      renderResults(input.value);
+      updatePanelTitleState(input.value);
+      input.focus();
+    }
+
+    input?.addEventListener('input', () => { renderResults(input.value); updatePanelTitleState(input.value); });
     input?.addEventListener('keydown', (event) => {
       if (event.key !== 'Tab') return;
       if (input.selectionStart !== input.value.length || input.selectionEnd !== input.value.length) return;
@@ -463,8 +494,9 @@ function typeLabel(type: ActivityType) {
       event.preventDefault();
       input.value = completion;
       renderResults(input.value);
+      updatePanelTitleState(input.value);
     });
-    clear?.addEventListener('click', () => { input.value = ''; renderResults(''); input.focus(); });
+    clear?.addEventListener('click', () => { input.value = ''; renderResults(''); updatePanelTitleState(''); input.focus(); });
     document.addEventListener('keydown', (event) => {
       if (event.key === '/' && document.activeElement !== input) {
         event.preventDefault();
@@ -473,22 +505,25 @@ function typeLabel(type: ActivityType) {
       if (event.key === 'Escape' && document.activeElement === input) {
         input.value = '';
         renderResults('');
+        updatePanelTitleState('');
       }
     });
     document.querySelectorAll('[data-lane]').forEach((button) => {
       button.addEventListener('click', () => {
         const lane = button.getAttribute('data-lane');
-        input.value = `type:${lane}`;
-        renderResults(input.value);
-        input.focus();
+        setSearchExpression(`type:${lane}`);
       });
     });
     document.querySelectorAll('[data-dossier]').forEach((button) => {
       button.addEventListener('click', () => {
         const dossier = button.getAttribute('data-dossier');
-        input.value = `dossier:${dossier}`;
-        renderResults(input.value);
-        input.focus();
+        setSearchExpression(`dossier:${dossier}`);
+      });
+    });
+    document.querySelectorAll('[data-panel-query]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const query = button.getAttribute('data-panel-query');
+        if (query) setSearchExpression(query);
       });
     });
   </script>
@@ -781,6 +816,25 @@ function typeLabel(type: ActivityType) {
 
     .side-panel { padding: 1rem; }
     .panel-title { color: var(--primary); font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.7rem; }
+    .panel-title-button {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+    }
+    .panel-title-button:hover,
+    .panel-title-button:focus-visible,
+    .panel-title-button[data-active='true'] {
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(214, 168, 95, 0.45);
+      outline: none;
+    }
+    .panel-title-button[data-active='true']::before { content: '▶ '; }
     .side-panel a { color: inherit; text-decoration: none; }
     .oracle a { display: grid; gap: 0.35rem; }
     .oracle time { color: var(--gold); font-size: 0.75rem; }

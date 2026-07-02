@@ -10,6 +10,7 @@ type ActivityType =
   | 'ingestion'
   | 'journal'
   | 'dream'
+  | 'message'
   | 'conversation'
   | 'project'
   | 'knowledge'
@@ -64,6 +65,7 @@ const LIMITS: Record<ActivityType, number> = {
   ingestion: 90,
   journal: 90,
   dream: 60,
+  message: 80,
   conversation: 80,
   project: 90,
   knowledge: 90,
@@ -76,6 +78,7 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   ingestion: 'Vault Ingestion',
   journal: 'Journal',
   dream: 'Dream Journal',
+  message: 'Messages',
   conversation: 'Conversation',
   project: 'Project Work',
   knowledge: 'Knowledge Update',
@@ -337,6 +340,32 @@ function dateFromText(input: string): string | null {
   return `${year}-${month}-${day}T12:00:00.000Z`;
 }
 
+function dateOnlyTimestamp(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const match = input.trim().match(/^(20\d{2})-([01]\d)-([0-3]\d)$/);
+  if (!match) return null;
+  return `${match[1]}-${match[2]}-${match[3]}T12:00:00.000Z`;
+}
+
+function validIsoTimestamp(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const parsed = Date.parse(input);
+  return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
+}
+
+function titleCase(input: string) {
+  return input
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`)
+    .join(' ');
+}
+
+function frontmatterString(fm: Record<string, string | string[]>, key: string) {
+  const value = fm[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
 async function safeRead(path: string): Promise<string> {
   try {
     return await readFile(path, 'utf8');
@@ -439,6 +468,38 @@ async function collectFiles(type: ActivityType, root: string, subtitle?: string)
   const files = await walkMarkdown(root);
   const items = await Promise.all(files.map((file) => fileItem(type, file, subtitle)));
   return newest(items).slice(0, LIMITS[type]);
+}
+
+async function messageFileItem(fullPath: string): Promise<ActivityItem> {
+  const markdown = await safeRead(fullPath);
+  const relPath = relative(VAULT_DIR, fullPath);
+  const fm = extractFrontmatter(markdown);
+  const fileStats = await stat(fullPath);
+  const headings = extractHeadings(markdown);
+  const provider = frontmatterString(fm, 'provider') || relPath.split('/')[2] || 'messages';
+  const isGroup = /^true$/i.test(frontmatterString(fm, 'is_group'));
+  const title = frontmatterString(fm, 'group_name') || frontmatterString(fm, 'contact') || headings[0]?.replace(/\s+—\s+\d{4}-\d{2}-\d{2}$/, '') || basename(dirname(fullPath));
+  const messageDate = dateOnlyTimestamp(frontmatterString(fm, 'date')) ?? dateFromText(relPath) ?? fileStats.mtime.toISOString();
+  const syncedAt = validIsoTimestamp(frontmatterString(fm, 'synced_at'));
+  const syncLabel = syncedAt ? `synced ${syncedAt.slice(0, 10)} ${syncedAt.slice(11, 16)}Z` : 'sync time unknown';
+  const providerLabel = titleCase(provider);
+  const scope = isGroup ? 'group' : 'direct';
+
+  return makeItem({
+    type: 'message',
+    title,
+    subtitle: `${providerLabel} · ${scope} · ${syncLabel}`,
+    timestamp: messageDate,
+    path: relPath,
+    markdown,
+    tags: ['message', provider.toLowerCase().replace(/\s+/g, '-'), scope],
+  });
+}
+
+async function collectMessages(): Promise<ActivityItem[]> {
+  const files = await walkMarkdown(join(VAULT_DIR, 'Sources/Messages'));
+  const items = await Promise.all(files.map((file) => messageFileItem(file)));
+  return newest(items).slice(0, LIMITS.message);
 }
 
 function newest(items: ActivityItem[]): ActivityItem[] {
@@ -567,10 +628,11 @@ async function main() {
   if (!existsSync(VAULT_DIR)) {
     throw new Error(`Vault directory does not exist: ${VAULT_DIR}`);
   }
-  const [lens, journals, dreams, projects, knowledge, logItems, oren, watashi, daemonStatus] = await Promise.all([
+  const [lens, journals, dreams, messages, projects, knowledge, logItems, oren, watashi, daemonStatus] = await Promise.all([
     collectFiles('sias-lens', join(VAULT_DIR, '_System/Daemons/sias-lens/reports'), "Sia's recurring synthesis report"),
     collectFiles('journal', join(VAULT_DIR, 'Sources/Journal'), 'Promoted journal source'),
     collectFiles('dream', join(VAULT_DIR, 'Sources/DreamJournal'), 'Dream journal source'),
+    collectMessages(),
     collectFiles('project', join(VAULT_DIR, 'Projects'), 'Active project note'),
     collectFiles('knowledge', join(VAULT_DIR, 'Knowledge'), 'Compiled Knowledge page'),
     collectLogItems(),
@@ -579,7 +641,7 @@ async function main() {
     collectDaemonStatus(),
   ]);
 
-  const items = newest([...lens, ...journals, ...dreams, ...projects, ...knowledge, ...logItems, ...oren, ...watashi, ...daemonStatus]);
+  const items = newest([...lens, ...journals, ...dreams, ...messages, ...projects, ...knowledge, ...logItems, ...oren, ...watashi, ...daemonStatus]);
   const counts = items.reduce<Record<string, number>>((acc, item) => {
     acc[item.type] = (acc[item.type] ?? 0) + 1;
     return acc;

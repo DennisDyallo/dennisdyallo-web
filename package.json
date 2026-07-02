@@ -14,6 +14,8 @@
     "dashboard:verify-private": "bun scripts/verify-dashboard-privacy.ts",
     "dashboard:agent": "bun scripts/vault-dashboard-agent.ts",
     "dashboard:agent:test": "bun scripts/verify-vault-dashboard-agent.ts",
+    "dashboard:harness": "bun scripts/vault-dashboard-harness.ts",
+    "dashboard:harness:test": "bun scripts/verify-vault-dashboard-harness.ts",
     "astro": "astro"
   },
   "dependencies": {
