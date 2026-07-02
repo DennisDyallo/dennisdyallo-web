@@ -13,7 +13,10 @@ type ActivityType =
   | 'project'
   | 'knowledge'
   | 'daemon-update'
-  | 'daemon-status';
+  | 'daemon-status'
+  | 'repo-activity'
+  | 'registry-project'
+  | 'registry-service';
 
 type ActivityItem = {
   id: string;
@@ -54,6 +57,9 @@ const lanes: Array<{ type: ActivityType; label: string; glyph: string; hint: str
   { type: 'knowledge', label: 'Knowledge', glyph: '✦', hint: 'Codex' },
   { type: 'daemon-update', label: 'Daemon Updates', glyph: '⚙', hint: 'Patch notes' },
   { type: 'daemon-status', label: 'Daemons', glyph: '♥', hint: 'Party frames' },
+  { type: 'registry-project', label: 'Registry', glyph: '⌘', hint: 'Canonical map' },
+  { type: 'registry-service', label: 'Services', glyph: '◈', hint: 'System substrate' },
+  { type: 'repo-activity', label: 'Repo Activity', glyph: '⌁', hint: 'Latest commits' },
 ];
 
 const counts = lanes.map((lane) => ({ ...lane, count: items.filter((item) => item.type === lane.type).length }));
@@ -62,6 +68,9 @@ const conversations = items.filter((item) => item.type === 'conversation').slice
 const messages = items.filter((item) => item.type === 'message').slice(0, 5);
 const projects = items.filter((item) => item.type === 'project').slice(0, 5);
 const daemons = items.filter((item) => item.type === 'daemon-status').slice(0, 10);
+const registryProjects = items.filter((item) => item.type === 'registry-project').slice(0, 7);
+const registryServices = items.filter((item) => item.type === 'registry-service').slice(0, 6);
+const repoActivity = items.filter((item) => item.type === 'repo-activity').slice(0, 5);
 function isPeopleDossier(item: ActivityItem) {
   return item.path === 'Knowledge/People.md' || item.path.startsWith('Knowledge/People/') || item.tags.includes('type/person') || item.tags.includes('person');
 }
@@ -129,7 +138,7 @@ function typeLabel(type: ActivityType) {
           <p class="eyebrow">Vault command center</p>
           <h1 id="dashboard-title">Vault Quest Log</h1>
           <p class="hero-copy">
-            Recent activity, message-sync drops, companion conversations, dream realm signals, daemon party frames, and Sia's oracle updates in one private retro console.
+            Recent activity, message-sync drops, companion conversations, dream realm signals, daemon party frames, registry projects, services, and Sia's oracle updates in one private retro console.
           </p>
         </div>
         <div class="save-stats" aria-label="Vault stats">
@@ -158,7 +167,7 @@ function typeLabel(type: ActivityType) {
         <button id="clear-search" type="button">CLR</button>
       </div>
       <p class="search-help">
-        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:message</code>, <code>type:lens</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
+        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:message</code>, <code>type:registry-project</code>, <code>type:registry-service</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
       </p>
       <div id="search-results" class="search-results" aria-live="polite"></div>
     </section>
@@ -255,6 +264,36 @@ function typeLabel(type: ActivityType) {
             </a>
           ))}
         </section>
+
+        <section class="side-panel registry-panel">
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:registry-project" aria-pressed="false">Canonical Map</button>
+          {registryProjects.map((item) => (
+            <a class="mini-row" href={item.sourceUrl}>
+              <span class="avatar">⌘</span>
+              <span><strong>{item.title}</strong><em>{item.subtitle}</em></span>
+            </a>
+          ))}
+        </section>
+
+        <section class="side-panel registry-panel">
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:registry-service" aria-pressed="false">Services + Health</button>
+          {registryServices.map((item) => (
+            <a class="daemon-row" href={item.sourceUrl}>
+              <span class:list={['health', item.status === 'down' ? 'down' : item.status === 'stale' ? 'stale' : item.status === 'unknown' ? 'unknown' : 'ok']}></span>
+              <span><strong>{item.title}</strong><em>{item.subtitle}</em></span>
+            </a>
+          ))}
+        </section>
+
+        <section class="side-panel">
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:repo-activity" aria-pressed="false">Repo Pulse</button>
+          {repoActivity.map((item) => (
+            <a class="mini-row" href={item.sourceUrl}>
+              <span class="avatar">⌁</span>
+              <span><strong>{item.title}</strong><em>{item.subtitle}</em></span>
+            </a>
+          ))}
+        </section>
       </aside>
     </section>
   </main>
@@ -278,6 +317,9 @@ function typeLabel(type: ActivityType) {
       knowledge: 'Knowledge',
       'daemon-update': 'Daemon Update',
       'daemon-status': 'Daemon Status',
+      'repo-activity': 'Repo Activity',
+      'registry-project': 'Registry Project',
+      'registry-service': 'Registry Service',
     };
     const filterNames = ['type', 'person', 'after', 'before', 'dossier'];
     const typeValues = Object.keys(labels).sort((a, b) => a.length - b.length || a.localeCompare(b));
@@ -299,7 +341,7 @@ function typeLabel(type: ActivityType) {
 
     function matchesFilters(item, filters) {
       if (filters.type) {
-        const aliases = { lens: 'sias-lens', dreams: 'dream', messages: 'message', ingestions: 'ingestion', daemon: 'daemon-status' };
+        const aliases = { lens: 'sias-lens', dreams: 'dream', messages: 'message', ingestions: 'ingestion', daemon: 'daemon-status', registry: 'registry-project', service: 'registry-service', services: 'registry-service', repo: 'repo-activity' };
         const wanted = aliases[filters.type] || filters.type;
         if (!item.type.includes(wanted)) return false;
       }
@@ -791,6 +833,9 @@ function typeLabel(type: ActivityType) {
     .type-sias-lens .card-rarity { background: var(--gold); }
     .type-conversation .card-rarity { background: var(--green); }
     .type-daemon-status .card-rarity { background: #c46874; color: var(--ink); }
+    .type-registry-project .card-rarity { background: #8d67ff; color: var(--ink); }
+    .type-registry-service .card-rarity { background: #62b6a8; color: #080605; }
+    .type-repo-activity .card-rarity { background: #d6a85f; color: #080605; }
 
     .card-main { padding: 1rem; }
     .card-main time { color: var(--gold); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; }

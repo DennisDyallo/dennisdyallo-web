@@ -15,7 +15,10 @@ type ActivityType =
   | 'project'
   | 'knowledge'
   | 'daemon-update'
-  | 'daemon-status';
+  | 'daemon-status'
+  | 'repo-activity'
+  | 'registry-project'
+  | 'registry-service';
 
 type SearchFields = {
   title: string;
@@ -71,6 +74,9 @@ const LIMITS: Record<ActivityType, number> = {
   knowledge: 90,
   'daemon-update': 80,
   'daemon-status': 40,
+  'repo-activity': 60,
+  'registry-project': 80,
+  'registry-service': 40,
 };
 
 const TYPE_LABELS: Record<ActivityType, string> = {
@@ -84,6 +90,27 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   knowledge: 'Knowledge Update',
   'daemon-update': 'Daemon Update',
   'daemon-status': 'Daemon Status',
+  'repo-activity': 'Repo Activity',
+  'registry-project': 'Registry Project',
+  'registry-service': 'Registry Service',
+};
+
+type ProjectRegistry = {
+  updatedAt?: string;
+  projects?: RegistryProject[];
+};
+
+type RegistryProject = {
+  id: string;
+  name: string;
+  kind?: string;
+  status?: string;
+  description?: string;
+  paths?: Record<string, string>;
+  domains?: string[];
+  daemons?: Array<{ name?: string; label?: string; type?: string; schedule?: string }>;
+  matrixRooms?: Array<{ name?: string; roomId?: string; purpose?: string }>;
+  dashboard?: { includeRepoActivity?: boolean; activityLimit?: number };
 };
 
 function slugify(input: string): string {
@@ -624,11 +651,198 @@ function statusLabel(status: 'ok' | 'stale' | 'unknown' | 'down'): string {
   return { ok: 'OK', stale: 'STALE', unknown: 'UNKNOWN', down: 'DOWN' }[status];
 }
 
+function registryPath(): string {
+  return join(VAULT_DIR, '_System/PAI/Identity/project-registry.json');
+}
+
+async function readProjectRegistry(): Promise<ProjectRegistry | null> {
+  const registryText = await safeRead(registryPath());
+  if (!registryText) return null;
+  try {
+    return JSON.parse(registryText) as ProjectRegistry;
+  } catch {
+    return null;
+  }
+}
+
+function registryTimestamp(registry: ProjectRegistry): string {
+  return dateOnlyTimestamp(registry.updatedAt) ?? validIsoTimestamp(registry.updatedAt) ?? new Date().toISOString();
+}
+
+function commaList(values: Array<string | undefined>, fallback = 'none'): string {
+  const clean = values.map((value) => value?.trim()).filter((value): value is string => Boolean(value));
+  return clean.length ? clean.join(', ') : fallback;
+}
+
+function pathStatusLines(project: RegistryProject): string[] {
+  return Object.entries(project.paths ?? {}).map(([name, path]) => `- **${name}:** ${existsSync(path) ? 'present' : 'missing'} — \`${path}\``);
+}
+
+function registryProjectMarkdown(project: RegistryProject, checkedAt: string): string {
+  const domains = commaList(project.domains ?? []);
+  const daemons = commaList((project.daemons ?? []).map((daemon) => [daemon.name, daemon.label].filter(Boolean).join(' / ')));
+  const rooms = commaList((project.matrixRooms ?? []).map((room) => room.name ?? room.roomId));
+  const paths = pathStatusLines(project);
+  return [
+    `# ${project.name}`,
+    '',
+    project.description ?? 'Registered project.',
+    '',
+    `**Registry ID:** \`${project.id}\``,
+    `**Kind:** ${project.kind ?? 'unknown'}`,
+    `**Status:** ${project.status ?? 'unknown'}`,
+    `**Domains:** ${domains}`,
+    `**Daemons:** ${daemons}`,
+    `**Matrix rooms:** ${rooms}`,
+    `**Snapshot:** checked ${checkedAt}`,
+    '',
+    '## Path Presence',
+    paths.length ? paths.join('\n') : '- No paths registered.',
+  ].join('\n');
+}
+
+async function collectRegistryInventory(): Promise<ActivityItem[]> {
+  const registry = await readProjectRegistry();
+  if (!registry) return [];
+  const checkedAt = new Date().toISOString();
+  const timestamp = registryTimestamp(registry);
+  const relPath = relative(VAULT_DIR, registryPath());
+  const items: ActivityItem[] = [];
+
+  for (const project of registry.projects ?? []) {
+    const domains = commaList(project.domains ?? []);
+    const pathEntries = Object.entries(project.paths ?? {});
+    const presentPaths = pathEntries.filter(([, path]) => existsSync(path)).length;
+    const tags = ['project-registry', project.id, project.kind ?? 'unknown', project.status ?? 'unknown'];
+
+    items.push(
+      makeItem({
+        type: 'registry-project',
+        title: project.name,
+        subtitle: `${project.kind ?? 'project'} · ${project.status ?? 'unknown'} · ${presentPaths}/${pathEntries.length} paths present · ${domains}`,
+        timestamp,
+        path: relPath,
+        markdown: registryProjectMarkdown(project, checkedAt),
+        tags,
+        idSeed: `registry-project-${project.id}`,
+      }),
+    );
+
+    if (project.kind === 'service' || project.paths?.service) {
+      items.push(
+        makeItem({
+          type: 'registry-service',
+          title: project.name,
+          subtitle: `${project.paths?.service && existsSync(project.paths.service) ? 'service path present' : 'service path missing'} · ${domains}`,
+          timestamp,
+          path: relPath,
+          markdown: registryProjectMarkdown(project, checkedAt),
+          tags: [...tags, 'service'],
+          status: 'unknown',
+          idSeed: `registry-service-${project.id}`,
+        }),
+      );
+    }
+  }
+
+  return newest(items).slice(0, LIMITS['registry-project'] + LIMITS['registry-service']);
+}
+
+function readLatestRegistryReport(): { ok?: boolean; errors?: number; warnings?: number; generatedAt?: string } | null {
+  const reportPath = join(VAULT_DIR, '_System/Daemons/project-registry/reports/latest.json');
+  if (!existsSync(reportPath)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(reportPath, 'utf8')) as {
+      ok?: boolean;
+      generatedAt?: string;
+      counts?: { errors?: number; warnings?: number };
+    };
+    return {
+      ok: parsed.ok,
+      errors: parsed.counts?.errors,
+      warnings: parsed.counts?.warnings,
+      generatedAt: validIsoTimestamp(parsed.generatedAt) ?? parsed.generatedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function collectRegistryHealth(): Promise<ActivityItem[]> {
+  if (!existsSync(registryPath())) return [];
+  const now = new Date().toISOString();
+  const label = 'com.pai.projectregistry';
+  const launchStatus = daemonStatus(label, 'Interval', 'Every 3600s', readLaunchctlList());
+  const report = readLatestRegistryReport();
+  const status: 'ok' | 'stale' | 'unknown' | 'down' = report?.ok === false ? 'down' : launchStatus;
+  const markdown = [
+    '# Project Registry Daemon',
+    '',
+    'Build-time health snapshot for the registry daemon. This is not live telemetry; use the checked-at timestamp before trusting freshness. Doctor evidence comes from the latest daemon report; dashboard generation does not execute vault-resident registry code.',
+    '',
+    `**Checked at:** ${now}`,
+    `**Launchd label:** \`${label}\``,
+    `**Launchd status:** ${statusLabel(launchStatus)}`,
+    `**Doctor status:** ${report ? (report.ok ? 'OK' : 'DOWN') : 'UNKNOWN'}`,
+    `**Doctor findings:** ${report ? `${report.errors ?? 0} errors, ${report.warnings ?? 0} warnings` : 'not available'}`,
+    `**Latest daemon report:** ${report ? `${report.ok ? 'OK' : 'DOWN'} · ${report.errors ?? 0} errors, ${report.warnings ?? 0} warnings · ${report.generatedAt ?? 'unknown time'}` : 'not available'}`,
+  ].join('\n');
+  return [
+    makeItem({
+      type: 'registry-service',
+      title: 'Project Registry Daemon',
+      subtitle: `${statusLabel(status)} · snapshot checked ${now.slice(11, 16)}Z`,
+      timestamp: now,
+      path: relative(VAULT_DIR, registryPath()),
+      markdown,
+      tags: ['project-registry', 'daemon', 'health', 'service'],
+      status,
+      idSeed: 'project-registry-daemon-health',
+    }),
+  ];
+}
+
+async function collectRegistryRepoActivity(): Promise<ActivityItem[]> {
+  const registry = await readProjectRegistry();
+  if (!registry) return [];
+
+  const items: ActivityItem[] = [];
+  for (const project of registry.projects ?? []) {
+    if (project.dashboard?.includeRepoActivity !== true || !project.paths?.repo || !existsSync(project.paths.repo)) continue;
+    const latest = readLatestCommit(project.paths.repo);
+    if (!latest) continue;
+    items.push(
+      makeItem({
+        type: 'repo-activity',
+        title: project.name,
+        subtitle: `Latest repo activity · ${latest.subject}`,
+        timestamp: latest.timestamp,
+        path: `Project Registry/${project.id}`,
+        markdown: `# ${project.name}\n\n${project.description ?? 'Registry opted-in repository.'}\n\nLatest commit: ${latest.subject}`,
+        tags: ['repo-activity', project.id],
+        idSeed: `registry-repo-${project.id}-${latest.hash}`,
+      }),
+    );
+  }
+  return newest(items).slice(0, LIMITS['repo-activity']);
+}
+
+function readLatestCommit(repoPath: string): { timestamp: string; subject: string; hash: string } | null {
+  try {
+    const output = execFileSync('git', ['-C', repoPath, 'log', '-1', '--format=%cI%x00%h%x00%s'], { encoding: 'utf8', timeout: 20_000 }).trim();
+    const [timestamp, hash, subject] = output.split('\0');
+    if (!timestamp || !hash || !subject) return null;
+    return { timestamp: validIsoTimestamp(timestamp) ?? timestamp, hash, subject: truncate(subject, 120) };
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   if (!existsSync(VAULT_DIR)) {
     throw new Error(`Vault directory does not exist: ${VAULT_DIR}`);
   }
-  const [lens, journals, dreams, messages, projects, knowledge, logItems, oren, watashi, daemonStatus] = await Promise.all([
+  const [lens, journals, dreams, messages, projects, knowledge, logItems, oren, watashi, daemonStatus, registryInventory, registryHealth, repoActivity] = await Promise.all([
     collectFiles('sias-lens', join(VAULT_DIR, '_System/Daemons/sias-lens/reports'), "Sia's recurring synthesis report"),
     collectFiles('journal', join(VAULT_DIR, 'Sources/Journal'), 'Promoted journal source'),
     collectFiles('dream', join(VAULT_DIR, 'Sources/DreamJournal'), 'Dream journal source'),
@@ -639,9 +853,12 @@ async function main() {
     collectConversation('oren'),
     collectConversation('watashi'),
     collectDaemonStatus(),
+    collectRegistryInventory(),
+    collectRegistryHealth(),
+    collectRegistryRepoActivity(),
   ]);
 
-  const items = newest([...lens, ...journals, ...dreams, ...messages, ...projects, ...knowledge, ...logItems, ...oren, ...watashi, ...daemonStatus]);
+  const items = newest([...lens, ...journals, ...dreams, ...messages, ...projects, ...knowledge, ...logItems, ...oren, ...watashi, ...daemonStatus, ...registryInventory, ...registryHealth, ...repoActivity]);
   const counts = items.reduce<Record<string, number>>((acc, item) => {
     acc[item.type] = (acc[item.type] ?? 0) + 1;
     return acc;
