@@ -49,9 +49,15 @@ type ActivityItem = {
 };
 
 type SummaryBrief = {
-  status: 'cached' | 'generated' | 'error';
+  status: 'cached' | 'generated' | 'extractive-fallback' | 'error';
+  label: string;
+  method: 'heuristic-synthesis' | 'extractive-fallback';
   summary: string;
+  signal: string;
+  why_it_matters: string;
   key_points: string[];
+  open_loops: string[];
+  next_moves: string[];
   action_items: string[];
   tags: string[];
   updated_at: string;
@@ -61,7 +67,7 @@ const VAULT_DIR = process.env.VAULT_DASHBOARD_VAULT ?? join(homedir(), 'Document
 const OUT_FILE = join(process.cwd(), 'src/data/vault-dashboard.json');
 const SUMMARY_DIR = process.env.VAULT_DASHBOARD_SUMMARY_DIR ?? join(process.cwd(), 'src/data/vault-dashboard-summaries');
 const VAULT_NAME = 'Sunthings_AppStorage_EU_e2e';
-const SUMMARY_VERSION = 1;
+const SUMMARY_VERSION = 2;
 
 const LIMITS: Record<ActivityType, number> = {
   'sias-lens': 30,
@@ -188,20 +194,100 @@ function extractActionItems(markdown: string): string[] {
     .slice(0, 5);
 }
 
-function deriveSummary(markdown: string, tags: string[]): Omit<SummaryBrief, 'status' | 'updated_at'> {
-  const fm = extractFrontmatter(markdown);
-  const frontmatterSummary = typeof fm.summary === 'string' ? cleanSummaryLine(fm.summary) : '';
-  const summarySection = extractSummarySection(markdown);
+const SUMMARY_STOPWORDS = new Set([
+  'about', 'after', 'again', 'also', 'because', 'before', 'being', 'between', 'could', 'Dennis', 'does', 'from', 'have', 'into', 'just', 'like', 'more', 'need', 'needs', 'note', 'notes', 'only', 'over', 'should', 'some', 'that', 'their', 'there', 'these', 'this', 'through', 'under', 'using', 'vault', 'were', 'what', 'when', 'where', 'which', 'with', 'would',
+].map((word) => word.toLowerCase()));
+
+function keywordsFrom(markdown: string, tags: string[], limit = 5): string[] {
+  const text = `${tags.join(' ')} ${stripMarkdown(markdown)}`.toLowerCase();
+  const counts = new Map<string, number>();
+  for (const token of text.match(/[a-z][a-z0-9-]{3,}/g) || []) {
+    if (SUMMARY_STOPWORDS.has(token) || /^\d+$/.test(token)) continue;
+    counts.set(token, (counts.get(token) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([token]) => token);
+}
+
+function inferBriefRole(vaultPath: string, tags: string[]): string {
+  const lowerPath = vaultPath.toLowerCase();
+  const tagText = tags.join(' ').toLowerCase();
+  if (lowerPath.includes('sources/messages')) return 'message-source snapshot';
+  if (lowerPath.includes('sources/journal')) return 'journal source note';
+  if (lowerPath.includes('dream')) return 'dream journal source';
+  if (lowerPath.startsWith('projects/') || tagText.includes('project')) return 'project work note';
+  if (lowerPath.startsWith('knowledge/') || tagText.includes('knowledge')) return 'knowledge note';
+  if (lowerPath.includes('daemon')) return 'daemon/system note';
+  return 'vault note';
+}
+
+function compactList(values: string[], fallback: string): string[] {
+  const cleaned = values.map((value) => truncate(cleanSummaryLine(value), 150)).filter(Boolean);
+  return cleaned.length ? cleaned.slice(0, 5) : [fallback];
+}
+
+function extractQuestions(markdown: string): string[] {
+  return splitSentences(stripMarkdown(markdown)).filter((sentence) => sentence.includes('?')).slice(0, 4);
+}
+
+function lexicalOverlap(a: string, b: string) {
+  const words = (value: string) => new Set((value.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) || []).filter((word) => !SUMMARY_STOPWORDS.has(word)));
+  const left = words(a);
+  const right = words(b);
+  if (!left.size || !right.size) return 0;
+  let shared = 0;
+  for (const word of left) if (right.has(word)) shared += 1;
+  return shared / left.size;
+}
+
+function isNearVerbatim(summary: string, markdown: string) {
+  const source = stripMarkdown(markdown).toLowerCase();
+  const normalized = summary.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (normalized.length > 80 && source.includes(normalized)) return true;
+  return splitSentences(stripMarkdown(markdown)).some((sentence) => lexicalOverlap(summary, sentence) > 0.82);
+}
+
+function deriveSummary(vaultPath: string, markdown: string, tags: string[]): Omit<SummaryBrief, 'status' | 'updated_at'> {
   const body = stripMarkdown(markdown);
-  const sentences = splitSentences(body);
-  const summary = truncate(frontmatterSummary || summarySection || sentences.slice(0, 2).join(' ') || body, 520);
-  const headings = extractHeadings(markdown).filter((heading) => !/^summary$/i.test(heading)).slice(0, 5);
-  const key_points = (headings.length ? headings : sentences.slice(0, 5)).map((point) => truncate(point, 180));
+  const headings = extractHeadings(markdown).filter((heading) => !/^summary$/i.test(heading));
+  const keywords = keywordsFrom(markdown, tags);
+  const role = inferBriefRole(vaultPath, tags);
+  const focus = keywords.length ? keywords.join(', ') : headings.slice(0, 3).join(', ') || 'the current document state';
+  const signal = `This reads as a ${role} centered on ${focus}.`;
+  const why_it_matters = role.includes('project')
+    ? 'It is useful because it captures active project state that can decay quickly if the next move is not made explicit.'
+    : role.includes('message') || role.includes('journal') || role.includes('dream')
+      ? 'It is useful as source material: the value is in the pattern it contributes, not just the raw text it records.'
+      : role.includes('knowledge')
+        ? 'It is useful because it turns scattered context into reusable knowledge for future decisions.'
+        : 'It is useful as a compact pointer to what changed, what remains open, and where attention should go next.';
+  let summary = truncate(`${signal} ${why_it_matters}`, 520);
+  if (isNearVerbatim(summary, markdown)) {
+    summary = truncate(`Extractive fallback for a ${role}; inspect the source note before treating this as synthesis.`, 520);
+  }
   const action_items = extractActionItems(markdown).map((item) => truncate(item, 180));
+  const questions = extractQuestions(markdown).map((question) => truncate(question, 150));
+  const key_points = headings.length
+    ? compactList(headings.map((heading) => `Covers ${heading.toLowerCase()}`), `Primary focus: ${focus}`)
+    : compactList(keywords.map((keyword) => `Recurring signal around ${keyword}`), `Primary focus: ${truncate(body || 'No readable text extracted.', 120)}`);
+  const open_loops = questions.length
+    ? questions
+    : (action_items.length ? action_items.map((item) => `Follow up on: ${item}`) : ['No explicit open loop detected; verify manually before acting.']);
+  const next_moves = action_items.length
+    ? action_items.map((item) => `Advance or close: ${item}`).slice(0, 4)
+    : ['Skim the source note, confirm the live relevance, and decide whether it belongs in Projects or Knowledge.'];
 
   return {
+    label: 'Extractive fallback with heuristic synthesis',
+    method: 'extractive-fallback',
     summary,
-    key_points: key_points.length ? key_points : [truncate(body || 'No readable text extracted.', 180)],
+    signal,
+    why_it_matters,
+    key_points,
+    open_loops,
+    next_moves,
     action_items,
     tags: tags.slice(0, 8),
   };
@@ -213,8 +299,14 @@ function isSummarySidecar(value: unknown, hash: string): value is SummaryBrief &
   return (
     record.version === SUMMARY_VERSION &&
     record.content_hash === hash &&
+    typeof record.label === 'string' &&
+    (record.method === 'heuristic-synthesis' || record.method === 'extractive-fallback') &&
     typeof record.summary === 'string' &&
+    typeof record.signal === 'string' &&
+    typeof record.why_it_matters === 'string' &&
     Array.isArray(record.key_points) &&
+    Array.isArray(record.open_loops) &&
+    Array.isArray(record.next_moves) &&
     Array.isArray(record.action_items) &&
     Array.isArray(record.tags) &&
     typeof record.updated_at === 'string'
@@ -228,18 +320,24 @@ function loadOrCreateSummary(vaultPath: string, markdown: string, tags: string[]
     if (existsSync(sidecarPath)) {
       const parsed = JSON.parse(readFileSync(sidecarPath, 'utf8'));
       if (isSummarySidecar(parsed, hash)) {
-        return {
-          status: 'cached',
-          summary: parsed.summary,
-          key_points: parsed.key_points,
-          action_items: parsed.action_items,
-          tags: parsed.tags,
-          updated_at: parsed.updated_at,
+          return {
+            status: 'cached',
+            label: parsed.label,
+            method: parsed.method,
+            summary: parsed.summary,
+            signal: parsed.signal,
+            why_it_matters: parsed.why_it_matters,
+            key_points: parsed.key_points,
+            open_loops: parsed.open_loops,
+            next_moves: parsed.next_moves,
+            action_items: parsed.action_items,
+            tags: parsed.tags,
+            updated_at: parsed.updated_at,
         };
       }
     }
 
-    const derived = deriveSummary(markdown, tags);
+    const derived = deriveSummary(vaultPath, markdown, tags);
     const updated_at = new Date().toISOString();
     mkdirSync(SUMMARY_DIR, { recursive: true });
     writeFileSync(
@@ -247,9 +345,9 @@ function loadOrCreateSummary(vaultPath: string, markdown: string, tags: string[]
       `${JSON.stringify({ version: SUMMARY_VERSION, path: vaultPath, content_hash: hash, updated_at, ...derived }, null, 2)}\n`,
       'utf8',
     );
-    return { status: 'generated', updated_at, ...derived };
+    return { status: 'extractive-fallback', updated_at, ...derived };
   } catch {
-    return { status: 'error', updated_at: new Date().toISOString(), ...deriveSummary(markdown, tags) };
+    return { status: 'error', updated_at: new Date().toISOString(), ...deriveSummary(vaultPath, markdown, tags) };
   }
 }
 

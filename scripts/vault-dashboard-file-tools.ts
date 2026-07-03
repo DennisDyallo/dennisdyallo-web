@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readdir, readFile, realpath, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, normalize, sep } from 'node:path';
 
 export type FileToolProposal =
@@ -28,6 +28,26 @@ export type FileToolProposal =
       kind: 'append';
       path: string;
       appendText: string;
+      expectedHash: string;
+      createdAt: string;
+      diff: string;
+    }
+  | {
+      id: string;
+      kind: 'create';
+      path: string;
+      content: string;
+      createdAt: string;
+      diff: string;
+    }
+  | {
+      id: string;
+      kind: 'create-and-link';
+      createPath: string;
+      createContent: string;
+      targetPath: string;
+      find: string;
+      replace: string;
       expectedHash: string;
       createdAt: string;
       diff: string;
@@ -63,12 +83,57 @@ export function vaultFullPath(vaultDir: string, path: string) {
   return { normalizedPath, fullPath };
 }
 
+async function assertRealPathInside(vaultDir: string, fullPath: string) {
+  const [rootReal, pathReal] = await Promise.all([realpath(vaultDir), realpath(fullPath)]);
+  const rootBase = normalize(rootReal);
+  const root = normalize(rootReal.endsWith(sep) ? rootReal : `${rootReal}${sep}`);
+  const resolved = normalize(pathReal);
+  if (resolved !== rootBase && !resolved.startsWith(root)) throw new FileToolError(403, 'Resolved path escaped vault root');
+}
+
+async function assertCreateParentInside(vaultDir: string, path: string) {
+  const normalizedPath = normalizeVaultPath(path);
+  let parent = dirname(normalizedPath).replace(/\\/g, '/');
+  if (parent === '.') parent = '';
+
+  while (parent && !existsSync(join(vaultDir, parent))) {
+    const next = dirname(parent).replace(/\\/g, '/');
+    parent = next === '.' || next === parent ? '' : next;
+  }
+
+  await assertRealPathInside(vaultDir, parent ? join(vaultDir, parent) : vaultDir);
+}
+
+async function assertDestinationAbsent(fullPath: string) {
+  try {
+    await lstat(fullPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+    throw error;
+  }
+  throw new FileToolError(409, 'Destination already exists');
+}
+
 function assertMutablePath(path: string) {
   if (isImmutableSourcePath(path)) throw new FileToolError(403, 'Sources/ is immutable by default');
 }
 
+function assertCreatePath(path: string) {
+  const normalizedPath = normalizeVaultPath(path);
+  const root = normalizedPath.split('/')[0]?.toLowerCase();
+  if (!['inbox', 'knowledge', 'projects'].includes(root || '')) {
+    throw new FileToolError(403, 'New notes may only be created under Inbox/, Knowledge/, or Projects/');
+  }
+  if (extname(normalizedPath).toLowerCase() !== '.md') throw new FileToolError(400, 'New notes must be markdown files');
+  assertMutablePath(normalizedPath);
+}
+
 async function readText(vaultDir: string, path: string) {
   const { normalizedPath, fullPath } = vaultFullPath(vaultDir, path);
+  await assertRealPathInside(vaultDir, fullPath).catch((error) => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new FileToolError(404, 'Vault file not found');
+    throw error;
+  });
   const content = await readFile(fullPath, 'utf8').catch((error) => {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new FileToolError(404, 'Vault file not found');
     throw error;
@@ -87,6 +152,14 @@ function replaceDiff(path: string, find: string, replace: string) {
 
 function moveDiff(fromPath: string, toPath: string) {
   return [`--- a/${fromPath}`, `+++ b/${toPath}`, '@@ move @@', `rename from ${fromPath}`, `rename to ${toPath}`].join('\n');
+}
+
+function createDiff(path: string, content: string) {
+  return [`--- /dev/null`, `+++ b/${path}`, '@@ create @@', ...content.trimEnd().split('\n').map((line) => `+${line}`)].join('\n');
+}
+
+function createAndLinkDiff(createPath: string, createContent: string, targetPath: string, find: string, replace: string) {
+  return [createDiff(createPath, createContent), replaceDiff(targetPath, find, replace)].join('\n');
 }
 
 function countMatches(content: string, find: string) {
@@ -176,7 +249,8 @@ export async function proposeMove(vaultDir: string, fromPath: string, toPath: st
   const to = vaultFullPath(vaultDir, toPath);
   assertMutablePath(from.normalizedPath);
   assertMutablePath(to.normalizedPath);
-  if (existsSync(to.fullPath)) throw new FileToolError(409, 'Destination already exists');
+  await assertCreateParentInside(vaultDir, to.normalizedPath);
+  await assertDestinationAbsent(to.fullPath);
   return {
     id: randomUUID(),
     kind: 'move',
@@ -188,14 +262,94 @@ export async function proposeMove(vaultDir: string, fromPath: string, toPath: st
   };
 }
 
+export async function proposeCreate(vaultDir: string, path: string, content: string): Promise<FileToolProposal> {
+  const to = vaultFullPath(vaultDir, path);
+  assertCreatePath(to.normalizedPath);
+  await assertCreateParentInside(vaultDir, to.normalizedPath);
+  if (!content.trim()) throw new FileToolError(400, 'Create content is required');
+  await assertDestinationAbsent(to.fullPath);
+  return {
+    id: randomUUID(),
+    kind: 'create',
+    path: to.normalizedPath,
+    content,
+    createdAt: new Date().toISOString(),
+    diff: createDiff(to.normalizedPath, content),
+  };
+}
+
+export async function proposeCreateAndLink(
+  vaultDir: string,
+  createPath: string,
+  createContent: string,
+  targetPath: string,
+  find: string,
+  replace: string,
+): Promise<FileToolProposal> {
+  const create = vaultFullPath(vaultDir, createPath);
+  const target = await readText(vaultDir, targetPath);
+  assertCreatePath(create.normalizedPath);
+  assertMutablePath(target.normalizedPath);
+  await assertCreateParentInside(vaultDir, create.normalizedPath);
+  if (!createContent.trim()) throw new FileToolError(400, 'Create content is required');
+  if (!find) throw new FileToolError(400, 'Find text is required');
+  await assertDestinationAbsent(create.fullPath);
+  const matches = countMatches(target.content, find);
+  if (matches === 0) throw new FileToolError(404, 'Selected text was not found in the current file');
+  if (matches > 1) throw new FileToolError(409, 'Selected text matches multiple locations; select a more specific passage');
+  return {
+    id: randomUUID(),
+    kind: 'create-and-link',
+    createPath: create.normalizedPath,
+    createContent,
+    targetPath: target.normalizedPath,
+    find,
+    replace,
+    expectedHash: hashText(target.content),
+    createdAt: new Date().toISOString(),
+    diff: createAndLinkDiff(create.normalizedPath, createContent, target.normalizedPath, find, replace),
+  };
+}
+
 export async function applyFileToolProposal(vaultDir: string, proposal: FileToolProposal) {
+  if (proposal.kind === 'create') {
+    const to = vaultFullPath(vaultDir, proposal.path);
+    assertCreatePath(to.normalizedPath);
+    await assertCreateParentInside(vaultDir, to.normalizedPath);
+    await assertDestinationAbsent(to.fullPath);
+    await mkdir(dirname(to.fullPath), { recursive: true });
+    await writeFile(to.fullPath, proposal.content, 'utf8');
+    return { status: 'applied' as const, changedFiles: [proposal.path], renderState: 'stale' as const };
+  }
+
+  if (proposal.kind === 'create-and-link') {
+    const create = vaultFullPath(vaultDir, proposal.createPath);
+    const target = await readText(vaultDir, proposal.targetPath);
+    assertCreatePath(create.normalizedPath);
+    assertMutablePath(target.normalizedPath);
+    await assertCreateParentInside(vaultDir, create.normalizedPath);
+    if (hashText(target.content) !== proposal.expectedHash) throw new FileToolError(409, 'File changed since proposal was created');
+    if (countMatches(target.content, proposal.find) !== 1) throw new FileToolError(409, 'Selected text no longer has exactly one match');
+    await assertDestinationAbsent(create.fullPath);
+    await mkdir(dirname(create.fullPath), { recursive: true });
+    await writeFile(create.fullPath, proposal.createContent, 'utf8');
+    try {
+      await writeFile(target.fullPath, target.content.replace(proposal.find, () => proposal.replace), 'utf8');
+    } catch (error) {
+      await unlink(create.fullPath).catch(() => undefined);
+      throw error;
+    }
+    return { status: 'applied' as const, changedFiles: [proposal.createPath, proposal.targetPath], renderState: 'stale' as const };
+  }
+
   if (proposal.kind === 'move') {
     const from = await readText(vaultDir, proposal.fromPath);
     const to = vaultFullPath(vaultDir, proposal.toPath);
     assertMutablePath(from.normalizedPath);
     assertMutablePath(to.normalizedPath);
+    await assertCreateParentInside(vaultDir, to.normalizedPath);
     if (hashText(from.content) !== proposal.expectedHash) throw new FileToolError(409, 'File changed since proposal was created');
-    if (existsSync(to.fullPath)) throw new FileToolError(409, 'Destination already exists');
+    await assertDestinationAbsent(to.fullPath);
     await mkdir(dirname(to.fullPath), { recursive: true });
     await rename(from.fullPath, to.fullPath);
     return { status: 'applied' as const, changedFiles: [proposal.fromPath, proposal.toPath], renderState: 'stale' as const };

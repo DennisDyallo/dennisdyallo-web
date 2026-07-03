@@ -5,6 +5,8 @@ import {
   FileToolError,
   applyFileToolProposal,
   findVaultFiles,
+  proposeCreate,
+  proposeCreateAndLink,
   proposeMove,
   proposeReplace,
   readVaultFile,
@@ -19,6 +21,8 @@ function usage() {
     'Usage:',
     '  bun scripts/vault-dashboard-harness.ts find <query> [--vault <path>] [--limit <n>]',
     '  bun scripts/vault-dashboard-harness.ts read <path> [--vault <path>]',
+    '  bun scripts/vault-dashboard-harness.ts create <path> <content> [--vault <path>]',
+    '  bun scripts/vault-dashboard-harness.ts create-and-link <create-path> <content> <target-path> <find> <replace> [--vault <path>]',
     '  bun scripts/vault-dashboard-harness.ts replace <path> <find> <replace> [--vault <path>]',
     '  bun scripts/vault-dashboard-harness.ts move <from> <to> [--vault <path>]',
     '  bun scripts/vault-dashboard-harness.ts apply <proposal-json-file> [--vault <path>]',
@@ -73,6 +77,16 @@ async function main() {
 
   if (command === 'replace') {
     print(await proposeReplace(vaultDir, args[0] || '', args[1] || '', args[2] || ''));
+    return;
+  }
+
+  if (command === 'create') {
+    print(await proposeCreate(vaultDir, args[0] || '', args[1] || ''));
+    return;
+  }
+
+  if (command === 'create-and-link') {
+    print(await proposeCreateAndLink(vaultDir, args[0] || '', args[1] || '', args[2] || '', args[3] || '', args[4] || ''));
     return;
   }
 

@@ -16,9 +16,15 @@ type ActivityItem = {
   obsidianUrl: string;
   person?: string;
   summary: {
-    status: 'cached' | 'generated' | 'error';
+    status: 'cached' | 'generated' | 'extractive-fallback' | 'error';
+    label?: string;
+    method?: string;
     summary: string;
+    signal?: string;
+    why_it_matters?: string;
     key_points: string[];
+    open_loops?: string[];
+    next_moves?: string[];
     action_items: string[];
     tags: string[];
     updated_at: string;
@@ -33,6 +39,14 @@ const { item } = Astro.props as { item: ActivityItem };
 const date = new Date(item.timestamp);
 const formattedDate = date.toLocaleDateString('en-GB', { month: 'long', day: '2-digit', year: 'numeric' });
 const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const summaryTitle = item.summary.method === 'extractive-fallback' ? 'Extractive Fallback Brief' : 'Operator Brief';
+const summaryStatus = item.summary.status === 'cached'
+  ? `cached ${item.summary.label ?? 'sidecar'}`
+  : item.summary.status === 'extractive-fallback'
+    ? item.summary.label ?? 'extractive fallback'
+    : item.summary.status === 'generated'
+      ? item.summary.label ?? 'generated sidecar'
+      : 'sidecar fallback';
 ---
 
 <DashboardLayout
@@ -74,8 +88,8 @@ const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute
 
       <section class:list={['summary-panel', `status-${item.summary.status}`]} aria-labelledby="summary-title">
         <div class="summary-topline">
-          <p id="summary-title">Auto Brief</p>
-          <span>{item.summary.status === 'cached' ? 'cached sidecar' : item.summary.status === 'generated' ? 'generated sidecar' : 'sidecar fallback'}</span>
+          <p id="summary-title">{summaryTitle}</p>
+          <span>{summaryStatus}</span>
         </div>
         <p class="summary-copy">{item.summary.summary}</p>
         <div class="summary-grid">
@@ -86,11 +100,25 @@ const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute
             </ul>
           </div>
           <div>
-            <h2>Action Items</h2>
-            {item.summary.action_items.length ? (
+            <h2>Open Loops</h2>
+            {item.summary.open_loops?.length ? (
+              <ul>{item.summary.open_loops.map((loop) => <li>{loop}</li>)}</ul>
+            ) : (
+              <p class="empty-state">No explicit open loops detected.</p>
+            )}
+          </div>
+          <div>
+            <h2>Why It Matters</h2>
+            <p class="empty-state">{item.summary.why_it_matters ?? 'No additional synthesis available.'}</p>
+          </div>
+          <div>
+            <h2>Next Moves</h2>
+            {item.summary.next_moves?.length ? (
+              <ul>{item.summary.next_moves.map((move) => <li>{move}</li>)}</ul>
+            ) : item.summary.action_items.length ? (
               <ul>{item.summary.action_items.map((action) => <li>{action}</li>)}</ul>
             ) : (
-              <p class="empty-state">No explicit action items detected.</p>
+              <p class="empty-state">No explicit next move detected.</p>
             )}
           </div>
         </div>

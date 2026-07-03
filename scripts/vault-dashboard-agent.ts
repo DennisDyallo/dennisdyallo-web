@@ -1,10 +1,13 @@
 import { existsSync } from 'node:fs';
-import { isAbsolute, join, normalize, sep } from 'node:path';
+import { realpath } from 'node:fs/promises';
+import { basename, dirname, isAbsolute, join, normalize, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   FileToolError,
   applyFileToolProposal,
   findVaultFiles,
+  proposeCreate,
+  proposeCreateAndLink,
   proposeAppend,
   proposeMove,
   proposeReplace,
@@ -36,7 +39,7 @@ type CallInference = (
 
 const ROOT = process.cwd();
 const PORT = Number(process.env.VAULT_DASHBOARD_AGENT_PORT || 3104);
-const HOST = process.env.VAULT_DASHBOARD_AGENT_HOST || '127.0.0.1';
+const HOST = safeAgentHost(process.env.VAULT_DASHBOARD_AGENT_HOST || '127.0.0.1');
 const VAULT_DIR = process.env.VAULT_DASHBOARD_VAULT || `${process.env.HOME}/Documents/Sunthings_AppStorage_EU_e2e`;
 const DASHBOARD_DATA_PATH = process.env.VAULT_DASHBOARD_DATA_PATH || join(ROOT, 'src/data/vault-dashboard.json');
 const INFERENCE_MODULE_PATH = process.env.VAULT_DASHBOARD_INFERENCE_MODULE || join(VAULT_DIR, '_System/Daemons/shared/inference.ts');
@@ -47,6 +50,12 @@ const AGENT_READONLY = process.env.VAULT_DASHBOARD_AGENT_READONLY === 'true';
 const ALLOWED_ORIGINS = new Set(['https://vault.dyallo.se', 'http://localhost:4321', 'http://127.0.0.1:4321']);
 const proposals = new Map<string, PendingProposal>();
 let callInferencePromise: Promise<CallInference> | undefined;
+
+function safeAgentHost(host: string) {
+  const normalized = host.trim().toLowerCase();
+  if (['127.0.0.1', 'localhost', '::1'].includes(normalized)) return normalized;
+  throw new Error(`Unsafe VAULT_DASHBOARD_AGENT_HOST: ${host}. Dashboard agent must bind to loopback.`);
+}
 
 class HttpError extends Error {
   constructor(public status: number, public payload: Record<string, unknown>) {
@@ -113,6 +122,19 @@ async function resolveItem(itemId: unknown) {
   return { item, fullPath, normalizedPath };
 }
 
+async function readResolvedItemText(item: DashboardItem, fullPath: string) {
+  if (typeof item.content === 'string') return item.content;
+  const [vaultReal, fileReal] = await Promise.all([realpath(VAULT_DIR), realpath(fullPath)]).catch((error) => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new HttpError(404, { error: 'Indexed vault file was not found' });
+    throw error;
+  });
+  const rootBase = normalize(vaultReal);
+  const root = normalize(vaultReal.endsWith(sep) ? vaultReal : `${vaultReal}${sep}`);
+  const resolved = normalize(fileReal);
+  if (resolved !== rootBase && !resolved.startsWith(root)) throw new HttpError(403, { error: 'Indexed path resolved outside vault root' });
+  return await Bun.file(fullPath).text();
+}
+
 function contextFor(item: DashboardItem) {
   return { id: item.id, title: item.title, path: item.path, subtitle: item.subtitle, tags: item.tags || [] };
 }
@@ -166,7 +188,7 @@ function buildReadOnlyPrompt(item: DashboardItem, normalizedPath: string, docume
 }
 
 async function answerWithInference(item: DashboardItem, fullPath: string, normalizedPath: string, message: string, selection: string) {
-  const documentText = item.content || await Bun.file(fullPath).text();
+  const documentText = await readResolvedItemText(item, fullPath);
   const { systemPrompt, userPrompt } = buildReadOnlyPrompt(item, normalizedPath, documentText, selection, message);
   const callInference = await loadCallInference();
   const reply = await callInference(
@@ -192,6 +214,179 @@ function patchTextFor(message: string) {
   return `\n\n## Agent Terminal Note - ${new Date().toISOString()}\n\n${text}\n`;
 }
 
+function isApprovalMessage(message: string) {
+  return /^(yes(,?\s+apply\s+it)?|y|apply|apply it|looks good|looks good to me|do it|go ahead|approved|approve|ship it|ok|okay)([.!\s]*)$/i.test(message.trim());
+}
+
+function isBlockedCommandRequest(message: string) {
+  const trimmed = message.trim().toLowerCase();
+  return /\b(commit|push|deploy|shell|terminal|execute|run command|run shell|arbitrary command)\b/.test(trimmed)
+    || /(^|\s)(rm\s+-rf|git\s+|bun\s+|npm\s+|pnpm\s+|yarn\s+|curl\s+|ssh\s+|scp\s+)/.test(trimmed);
+}
+
+function latestProposalId(itemId?: string) {
+  const entries = [...proposals.entries()].reverse();
+  if (itemId) return entries.find(([, pending]) => pending.itemId === itemId)?.[0] || '';
+  return entries[0]?.[0] || '';
+}
+
+function cleanTitle(input: string) {
+  return input
+    .replace(/\.md$/i, '')
+    .replace(/[\\/:*?"<>|#\[\]]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 90);
+}
+
+function titleToFileName(input: string) {
+  const title = cleanTitle(input);
+  if (!title) throw new FileToolError(400, 'Note title is required');
+  return `${title}.md`;
+}
+
+function pathDir(path: string) {
+  const dir = dirname(path).replace(/\\/g, '/');
+  return dir === '.' ? '' : dir;
+}
+
+function stripMd(path: string) {
+  return path.replace(/\.md$/i, '');
+}
+
+function inferFolder(message: string) {
+  const pathMatch = message.match(/\b(Inbox|Knowledge|Projects|Sources)\/([^\n"'`]+?)(?:\.md)?\b/i);
+  if (pathMatch) return pathMatch[1][0].toUpperCase() + pathMatch[1].slice(1).toLowerCase();
+  const folderMatch = message.match(/\b(Inbox|Knowledge|Projects|Sources)\b/i);
+  if (folderMatch) return folderMatch[1][0].toUpperCase() + folderMatch[1].slice(1).toLowerCase();
+  if (/\bproject\s+(note|page)\b/i.test(message)) return 'Projects';
+  if (/\bknowledge\s+(note|page)\b/i.test(message)) return 'Knowledge';
+  return '';
+}
+
+function inferTitle(message: string) {
+  const quoted = message.match(/["“”']([^"“”']{2,120})["“”']/)?.[1];
+  const named = message.match(/\b(?:called|titled|named|as)\s+([^.,;\n]+?)(?=\s+(?:from|with|and|under|in|into)\b|$)/i)?.[1];
+  const renameTo = message.match(/\brename\b[\s\S]*?\bto\s+([^.,;\n]+?)(?=\s+(?:from|with|and|under|in|into)\b|$)/i)?.[1];
+  const forTitle = message.match(/\b(?:for|about)\s+([^.,;\n]+?)(?=\s+(?:from|with|and|under|in|into)\b|$)/i)?.[1];
+  const pathTitle = message.match(/\b(?:Inbox|Knowledge|Projects|Sources)\/([^\n"'`]+?)(?:\.md)?\b/i)?.[1];
+  return cleanTitle(quoted || named || renameTo || pathTitle || forTitle || '');
+}
+
+function buildCreatePath(folder: string, title: string) {
+  return `${folder}/${titleToFileName(title)}`;
+}
+
+function firstMeaningfulLine(text: string) {
+  return text.split('\n').map((line) => line.replace(/^#+\s+/, '').trim()).find(Boolean) || '';
+}
+
+function knowledgeNoteContent(title: string, body: string) {
+  const summary = firstMeaningfulLine(body) || 'Created from the vault dashboard agent.';
+  return [
+    '---',
+    `title: "${title.replace(/"/g, '\\"')}"`,
+    'tags:',
+    '  - knowledge',
+    `created: ${new Date().toISOString()}`,
+    `summary: "${summary.replace(/"/g, '\\"').slice(0, 180)}"`,
+    '---',
+    '',
+    `# ${title}`,
+    '',
+    '## Summary',
+    '',
+    body.trim() || 'Created from the vault dashboard agent.',
+    '',
+    '## Open Question',
+    '',
+    '- What needs to be clarified next?',
+    '',
+    '## Related Links',
+    '',
+    '- ',
+  ].join('\n');
+}
+
+function noteContent(folder: string, title: string, body: string) {
+  if (folder.toLowerCase() === 'knowledge') return knowledgeNoteContent(title, body);
+  return [`# ${title}`, '', body.trim() || 'Created from the vault dashboard agent.', ''].join('\n');
+}
+
+function createBodyFor(message: string, selection: string) {
+  if (selection.trim()) return selection.trim();
+  const about = message.match(/\b(?:about|with)\s+([\s\S]+)$/i)?.[1]?.trim();
+  return about ? about.replace(/^selected text$/i, '').trim() : '';
+}
+
+function wantsCreate(message: string) {
+  return /\b(create|make|new)\b[\s\S]*\b(note|page)\b/i.test(message)
+    || /\b(turn|extract)\b[\s\S]*\b(selected|selection|this section|this passage)\b[\s\S]*\b(note|page)\b/i.test(message);
+}
+
+function wantsCreateAndLink(message: string) {
+  return wantsCreate(message) && /\b(link|link it|replace selected|turn|extract)\b/i.test(message);
+}
+
+function parseReplacementFromMessage(message: string) {
+  return message.match(/\b(?:with|to|say(?:ing)?)\s*:?\s*([\s\S]+)$/i)?.[1]?.trim() || '';
+}
+
+function wantsNaturalReplace(message: string) {
+  return /\b(replace|change|rewrite|edit)\b/i.test(message);
+}
+
+function parseFindReplace(message: string, selection: string) {
+  if (selection.trim() && wantsNaturalReplace(message)) {
+    const replace = parseReplacementFromMessage(message);
+    return replace ? { find: selection.trim(), replace } : null;
+  }
+
+  const replace = message.match(/\breplace\s+(["']?)([\s\S]+?)\1\s+with\s+(["']?)([\s\S]+)\3$/i);
+  if (replace?.[2] && replace[4]) return { find: replace[2].trim(), replace: replace[4].trim() };
+
+  const change = message.match(/\bchange\s+(["']?)([\s\S]+?)\1\s+to\s+(["']?)([\s\S]+)\3$/i);
+  if (change?.[2] && change[4]) return { find: change[2].trim(), replace: change[4].trim() };
+
+  return null;
+}
+
+function wantsMoveOrRename(message: string) {
+  return /\b(rename|move)\b/i.test(message);
+}
+
+function naturalMoveDestination(message: string, currentPath: string) {
+  const folder = inferFolder(message);
+  const pathMatch = message.match(/\b(Inbox|Knowledge|Projects|Archive|Sources)\/([^\n"'`]+?)(?:\.md)?\b/i);
+  if (pathMatch) return `${pathMatch[1][0].toUpperCase()}${pathMatch[1].slice(1)}/${titleToFileName(pathMatch[2])}`;
+
+  const title = inferTitle(message);
+  if (/\brename\b/i.test(message)) {
+    if (!title) return '';
+    const dir = pathDir(currentPath);
+    return dir ? `${dir}/${titleToFileName(title)}` : titleToFileName(title);
+  }
+
+  if (/\bmove\b/i.test(message) && folder) {
+    return title ? `${folder}/${titleToFileName(title)}` : `${folder}/${basename(currentPath)}`;
+  }
+
+  return '';
+}
+
+function naturalFindQuery(message: string) {
+  const match = message.match(/^(?:find|search|look for)\s+(?:notes?|files?)?\s*(?:about|matching|for)?\s*([\s\S]+)$/i);
+  return match?.[1]?.trim() || '';
+}
+
+function naturalReadPath(message: string) {
+  return message.match(/^read\s+([\s\S]+?\.md)$/i)?.[1]?.trim() || '';
+}
+
+function wantsAppend(message: string) {
+  return /^(append|add note|write note|note):/i.test(message.trim()) || /\bappend\b/i.test(message);
+}
+
 type ParsedToolCommand =
   | { kind: 'find'; query: string }
   | { kind: 'read'; path: string }
@@ -212,7 +407,11 @@ function parseToolCommand(message: string): ParsedToolCommand | null {
   }
 
   const move = trimmed.match(/^move\s+([\s\S]+)\s+to\s+([\s\S]+)$/i);
-  if (move?.[1]?.trim() && move[2]?.trim()) return { kind: 'move', fromPath: move[1].trim(), toPath: move[2].trim() };
+  if (move?.[1]?.trim() && move[2]?.trim()) {
+    const fromPath = move[1].trim();
+    if (/^(this|current)(\s+(note|file))?$/i.test(fromPath)) return null;
+    return { kind: 'move', fromPath, toPath: move[2].trim() };
+  }
 
   return null;
 }
@@ -266,6 +465,30 @@ async function handleToolCommand(command: ParsedToolCommand, item?: DashboardIte
   });
 }
 
+async function applyPendingProposal(proposalId: string) {
+  const pending = proposals.get(proposalId);
+  if (!pending) throw new HttpError(404, { error: 'No pending proposal found' });
+  if (AGENT_READONLY) throw new HttpError(403, { error: 'Write kill switch is enabled' });
+
+  const item = pending.itemId ? (await resolveItem(pending.itemId)).item : undefined;
+  let applied: Awaited<ReturnType<typeof applyFileToolProposal>>;
+  try {
+    applied = await applyFileToolProposal(VAULT_DIR, pending.proposal);
+  } catch (error) {
+    if (error instanceof FileToolError && error.status === 409) proposals.delete(proposalId);
+    throw error;
+  }
+  proposals.delete(proposalId);
+  return {
+    context: optionalContext(item),
+    labels: labelsFor('APPLIED', false),
+    renderState: applied.renderState,
+    status: 'applied',
+    reply: 'Applied to the vault working tree. Dashboard render is now stale; rebuild/deploy locally when ready. No commit or deploy was run.',
+    changedFiles: applied.changedFiles,
+  };
+}
+
 async function handleContext(req: Request) {
   const body = await readBody(req);
   const { item } = await resolveItem(body.itemId);
@@ -284,17 +507,126 @@ async function handleChat(req: Request) {
   const toolCommand = parseToolCommand(message);
   if (toolCommand) return await handleToolCommand(toolCommand, item);
 
-  if (/\b(commit|deploy|push)\b/i.test(message)) {
+  if (isApprovalMessage(message)) {
+    if (!item?.id) return json({ context: optionalContext(item), labels: labelsFor('READONLY'), renderState: 'fresh', reply: 'Open the item that owns the pending diff before approving it, or use the explicit apply button for a known proposal.' }, 400);
+    const proposalId = latestProposalId(item?.id);
+    if (!proposalId) return json({ context: optionalContext(item), labels: labelsFor('READONLY'), renderState: 'fresh', reply: 'No pending proposal is waiting for approval.' }, 404);
+    return json(await applyPendingProposal(proposalId));
+  }
+
+  const findQuery = naturalFindQuery(message);
+  if (findQuery) return await handleToolCommand({ kind: 'find', query: findQuery }, item);
+
+  const readPath = naturalReadPath(message);
+  if (readPath) return await handleToolCommand({ kind: 'read', path: readPath }, item);
+
+  if (isBlockedCommandRequest(message)) {
     return json({
       context: optionalContext(item),
       labels: labelsFor('READONLY'),
       renderState: 'fresh',
-      reply: 'Commit, push, and deploy are blocked in v1. Review/apply diffs here, then commit/deploy locally.',
+      reply: 'Commit, push, deploy, shell, and arbitrary command execution are blocked. I can only read vault notes or prepare deterministic vault file proposals.',
     });
   }
 
-  if (!resolved) return json({ error: 'Open a dashboard item for document-aware chat, or use an explicit command: find:, read:, replace in ..., move ... to ...' }, 400);
+  if (!resolved) return json({ error: 'Open a dashboard item for document-aware chat, or ask me to find/read a vault note.' }, 400);
   const { fullPath, normalizedPath } = resolved;
+
+  if (wantsCreate(message)) {
+    if (AGENT_READONLY) {
+      return json({
+        context: contextFor(item),
+        labels: labelsFor('READONLY', true),
+        renderState: 'fresh',
+        reply: 'Write kill switch is enabled; read-only context chat is available, but note creation is disabled.',
+      });
+    }
+
+    const folder = inferFolder(message);
+    const title = inferTitle(message);
+    if (!folder || !title) {
+      return json({
+        context: contextFor(item),
+        labels: labelsFor('READONLY'),
+        renderState: 'fresh',
+        reply: 'Which folder and title should I use? New notes can only be created under Inbox/, Knowledge/, or Projects/.',
+      }, 400);
+    }
+
+    const body = createBodyFor(message, selection);
+    const createPath = buildCreatePath(folder, title);
+    const createContent = noteContent(folder, title, body);
+    const linkBack = `[[${stripMd(createPath)}|${title}]]`;
+    const proposal = wantsCreateAndLink(message) && selection.trim()
+      ? await proposeCreateAndLink(VAULT_DIR, createPath, createContent, normalizedPath, selection.trim(), linkBack)
+      : await proposeCreate(VAULT_DIR, createPath, createContent);
+    proposals.set(proposal.id, { proposal, itemId: item.id });
+    return json({
+      context: contextFor(item),
+      labels: labelsFor('DIFF READY', false),
+      renderState: 'fresh',
+      reply: `Diff ready. Say yes or apply it to ${proposal.kind === 'create-and-link' ? 'create the note and link it from the current note' : 'create this note'}. No commit or deploy will run from the browser.`,
+      proposal: { id: proposal.id, createdAt: proposal.createdAt, diff: proposal.diff },
+    });
+  }
+
+  if (wantsMoveOrRename(message)) {
+    if (AGENT_READONLY) {
+      return json({
+        context: contextFor(item),
+        labels: labelsFor('READONLY', true),
+        renderState: 'fresh',
+        reply: 'Write kill switch is enabled; read-only context chat is available, but move/rename is disabled.',
+      });
+    }
+    const destination = naturalMoveDestination(message, normalizedPath);
+    if (!destination) {
+      return json({
+        context: contextFor(item),
+        labels: labelsFor('READONLY'),
+        renderState: 'fresh',
+        reply: 'What should the new note path or title be? For example: rename this note to "New Title" or move this note to Projects.',
+      }, 400);
+    }
+    const proposal = await proposeMove(VAULT_DIR, normalizedPath, destination);
+    proposals.set(proposal.id, { proposal, itemId: item.id });
+    return json({
+      context: contextFor(item),
+      labels: labelsFor('DIFF READY', false),
+      renderState: 'fresh',
+      reply: 'Move diff ready. Say yes or apply it to move/rename this note. No commit or deploy will run from the browser.',
+      proposal: { id: proposal.id, createdAt: proposal.createdAt, diff: proposal.diff },
+    });
+  }
+
+  if (wantsNaturalReplace(message)) {
+    if (AGENT_READONLY) {
+      return json({
+        context: contextFor(item),
+        labels: labelsFor('READONLY', true),
+        renderState: 'fresh',
+        reply: 'Write kill switch is enabled; read-only context chat is available, but replace/edit is disabled.',
+      });
+    }
+    const parsed = parseFindReplace(message, selection);
+    if (!parsed) {
+      return json({
+        context: contextFor(item),
+        labels: labelsFor('READONLY'),
+        renderState: 'fresh',
+        reply: 'I need the exact text to replace and the replacement text. Select the passage and say "replace selection with ...", or say "replace X with Y".',
+      }, 400);
+    }
+    const proposal = await proposeReplace(VAULT_DIR, normalizedPath, parsed.find, parsed.replace);
+    proposals.set(proposal.id, { proposal, itemId: item.id });
+    return json({
+      context: contextFor(item),
+      labels: labelsFor('DIFF READY', false),
+      renderState: 'fresh',
+      reply: 'Edit diff ready. Say yes or apply it to update this note. No commit or deploy will run from the browser.',
+      proposal: { id: proposal.id, createdAt: proposal.createdAt, diff: proposal.diff },
+    });
+  }
 
   if (!wantsWrite(message)) {
     const reply = await answerWithInference(item, fullPath, normalizedPath, message, selection);
@@ -319,6 +651,15 @@ async function handleChat(req: Request) {
     }, 403);
   }
 
+  if (!wantsAppend(message)) {
+    return json({
+      context: contextFor(item),
+      labels: labelsFor('READONLY'),
+      renderState: 'fresh',
+      reply: 'I can answer questions, find/read notes, or prepare replace, move/rename, create, and create-and-link proposals. Please make the edit target explicit.',
+    }, 400);
+  }
+
   const appendText = patchTextFor(message);
   const proposal = await proposeAppend(VAULT_DIR, normalizedPath, appendText);
   proposals.set(proposal.id, { proposal, itemId: item.id });
@@ -334,27 +675,7 @@ async function handleChat(req: Request) {
 async function handleApply(req: Request) {
   const body = await readBody(req);
   const proposalId = typeof body.proposalId === 'string' ? body.proposalId : '';
-  const pending = proposals.get(proposalId);
-  if (!pending) return json({ error: 'No pending proposal found' }, 404);
-  if (AGENT_READONLY) return json({ error: 'Write kill switch is enabled' }, 403);
-
-  const item = pending.itemId ? (await resolveItem(pending.itemId)).item : undefined;
-  let applied: Awaited<ReturnType<typeof applyFileToolProposal>>;
-  try {
-    applied = await applyFileToolProposal(VAULT_DIR, pending.proposal);
-  } catch (error) {
-    if (error instanceof FileToolError && error.status === 409) proposals.delete(proposalId);
-    throw error;
-  }
-  proposals.delete(proposalId);
-  return json({
-    context: optionalContext(item),
-    labels: labelsFor('APPLIED', false),
-    renderState: applied.renderState,
-    status: 'applied',
-    reply: 'Applied to the vault working tree. Dashboard render is now stale; rebuild/deploy locally when ready. No commit or deploy was run.',
-    changedFiles: applied.changedFiles,
-  });
+  return json(await applyPendingProposal(proposalId));
 }
 
 if (!existsSync(DASHBOARD_DATA_PATH)) {

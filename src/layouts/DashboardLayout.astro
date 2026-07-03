@@ -76,12 +76,12 @@ const { title, description, canonicalUrl, agentContext } = Astro.props;
         </aside>
         <div class="agent-terminal__console">
           <div id="agent-terminal-log" class="agent-terminal__log" aria-live="polite">
-            <p><span>sys</span> Press <kbd>Ctrl</kbd>+<kbd>§</kbd> to toggle. Browser sends item id + selected text only; paths resolve server-side.</p>
+            <p><span>sys</span> Press <kbd>Ctrl</kbd>+<kbd>§</kbd> to ask about this note, request an edit, create a linked note from selection, or approve a visible diff.</p>
           </div>
           <form id="agent-terminal-form" class="agent-terminal__form">
-            <label class="sr-only" for="agent-terminal-input">Agent terminal command</label>
+            <label class="sr-only" for="agent-terminal-input">Vault agent request</label>
             <span aria-hidden="true">vault&gt;</span>
-            <input id="agent-terminal-input" autocomplete="off" spellcheck="false" placeholder="find: query, read: path, replace in path: old => new, move old to new, or apply" />
+            <input id="agent-terminal-input" autocomplete="off" spellcheck="false" placeholder="Ask, edit, rename, create a Knowledge note, or say yes to apply the latest diff" />
             <button type="submit">RUN</button>
           </form>
         </div>
@@ -175,9 +175,9 @@ const { title, description, canonicalUrl, agentContext } = Astro.props;
 
       async function runTerminalCommand(message) {
         const itemId = terminalItemId();
-        const explicitCommand = /^(find:|read:|replace\s+in\s+|move\s+.+\s+to\s+|apply$)/i.test(message.trim());
+        const explicitCommand = /^(find:|read:|replace\s+in\s+|move\s+.+\s+to\s+|apply$|yes$|apply it$|looks good$)/i.test(message.trim());
         if (!itemId && !explicitCommand) {
-          appendTerminalLine('sys', 'Open a dashboard item for chat, or use find:/read:/replace/move/apply.', 'error');
+          appendTerminalLine('sys', 'Open a dashboard item for document-aware chat, or ask me to find/read a vault note.', 'error');
           return;
         }
         appendTerminalLine('you', message);
