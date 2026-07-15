@@ -94,13 +94,21 @@ Requirements:
 
 ## 30-Minute Regeneration
 
-Use launchd on the machine that has both this repo and the vault. Save as:
+Use launchd on the machine that has both this repo and the vault. The checked-in template is:
+
+```text
+ops/se.dyallo.vault-dashboard.plist
+```
+
+Install it as:
 
 ```text
 ~/Library/LaunchAgents/se.dyallo.vault-dashboard.plist
 ```
 
-Template:
+The dashboard page includes a 5-minute browser refresh, so an open tab will pick up the next deployed static build automatically.
+
+Current template:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -130,6 +138,7 @@ Install:
 
 ```bash
 mkdir -p /Users/Dennis.Dyall/Code/other/dyallose/Logs
+cp /Users/Dennis.Dyall/Code/other/dyallose/ops/se.dyallo.vault-dashboard.plist ~/Library/LaunchAgents/se.dyallo.vault-dashboard.plist
 launchctl load ~/Library/LaunchAgents/se.dyallo.vault-dashboard.plist
 ```
 

@@ -589,6 +589,13 @@ function typeLabel(type: ActivityType) {
       margin: 0 auto;
       padding: 1.2rem 0 4rem;
       font-family: var(--font-sans);
+      overflow-x: clip;
+    }
+
+    .dashboard-shell *,
+    .dashboard-shell *::before,
+    .dashboard-shell *::after {
+      box-sizing: border-box;
     }
 
     .hero-panel,
@@ -634,13 +641,14 @@ function typeLabel(type: ActivityType) {
       color: var(--gold);
       padding: 0.25rem 0.55rem;
       background: rgba(224, 83, 28, 0.09);
+      overflow-wrap: anywhere;
     }
 
     .boot-chip.purple { border-color: rgba(141, 103, 255, 0.7); color: var(--purple); }
 
     .hero-grid {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       gap: clamp(1rem, 2.6vw, 2rem);
       align-items: center;
     }
@@ -686,10 +694,11 @@ function typeLabel(type: ActivityType) {
       background: rgba(15, 11, 10, 0.6);
       padding: 0.65rem;
       display: grid;
+      min-width: 0;
     }
 
     .save-stats strong { color: var(--primary); font-size: 1.65rem; line-height: 1; }
-    .save-stats span { color: var(--muted); font-size: 0.76rem; text-transform: uppercase; }
+    .save-stats span { color: var(--muted); font-size: 0.76rem; text-transform: uppercase; overflow-wrap: anywhere; }
 
     .search-console {
       padding: 1rem;
@@ -751,7 +760,7 @@ function typeLabel(type: ActivityType) {
 
     .search-results {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
       gap: 0.75rem;
       margin-top: 0.9rem;
     }
@@ -771,14 +780,14 @@ function typeLabel(type: ActivityType) {
 
     .lane-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
       gap: 0.75rem;
       margin-bottom: 1.2rem;
     }
 
     .lane-card {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
       gap: 0.7rem;
       padding: 0.85rem;
@@ -787,9 +796,10 @@ function typeLabel(type: ActivityType) {
 
     .lane-card:hover { transform: translateY(-2px); border-color: var(--primary); }
     .lane-glyph { color: var(--primary); font-size: 1.4rem; }
-    .lane-text { display: grid; }
+    .lane-text { display: grid; min-width: 0; }
+    .lane-text strong { overflow-wrap: anywhere; }
     .lane-text em { color: var(--muted); font-size: 0.73rem; font-style: normal; text-transform: none; letter-spacing: 0; }
-    .lane-count { color: var(--gold); font-size: 1.25rem; }
+    .lane-count { color: var(--gold); font-size: 1.25rem; justify-self: end; }
 
     .main-grid {
       display: grid;
@@ -807,11 +817,15 @@ function typeLabel(type: ActivityType) {
     .side-panels {
       display: grid;
       gap: 0.85rem;
+      min-width: 0;
     }
+
+    .quest-log { min-width: 0; }
 
     .activity-card {
       display: grid;
       grid-template-columns: 128px 1fr;
+      min-width: 0;
       overflow: hidden;
     }
 
@@ -837,9 +851,9 @@ function typeLabel(type: ActivityType) {
     .type-registry-service .card-rarity { background: #62b6a8; color: #080605; }
     .type-repo-activity .card-rarity { background: #d6a85f; color: #080605; }
 
-    .card-main { padding: 1rem; }
+    .card-main { padding: 1rem; min-width: 0; }
     .card-main time { color: var(--gold); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; }
-    .card-main h3 { margin-top: 0.2rem; font-size: 1.45rem; }
+    .card-main h3 { margin-top: 0.2rem; font-size: 1.45rem; overflow-wrap: anywhere; }
     .subtitle { color: var(--primary); font-weight: 700; }
     .excerpt { color: var(--muted); margin-top: 0.45rem; }
     .path { color: rgba(242, 234, 219, 0.45); font-size: 0.78rem; margin-top: 0.5rem; overflow-wrap: anywhere; }
@@ -859,7 +873,7 @@ function typeLabel(type: ActivityType) {
       text-decoration: none;
     }
 
-    .side-panel { padding: 1rem; }
+    .side-panel { padding: 1rem; min-width: 0; }
     .panel-title { color: var(--primary); font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.7rem; }
     .panel-title-button {
       display: block;
@@ -888,11 +902,24 @@ function typeLabel(type: ActivityType) {
     .mini-row,
     .daemon-row {
       display: grid;
-      grid-template-columns: auto 1fr;
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 0.65rem;
       align-items: center;
       padding: 0.55rem 0;
       border-top: 1px solid rgba(242, 234, 219, 0.08);
+    }
+
+    .mini-row span:last-child,
+    .daemon-row span:last-child {
+      min-width: 0;
+    }
+
+    .mini-row strong,
+    .daemon-row strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .mini-row em,
@@ -919,6 +946,20 @@ function typeLabel(type: ActivityType) {
       .search-row { grid-template-columns: 1fr; }
       .prompt { display: none; }
       .save-stats { grid-template-columns: 1fr; }
+      .lane-card { grid-template-columns: auto minmax(0, 1fr); }
+      .lane-count { grid-column: 2; justify-self: start; }
+    }
+
+    @media (max-width: 420px) {
+      .dashboard-shell { width: min(100vw - 10px, 1480px); }
+      .hero-panel,
+      .search-console,
+      .side-panel { padding: 0.75rem; }
+      .lane-card { padding: 0.7rem; gap: 0.55rem; }
+      .card-main { padding: 0.8rem; }
+      .card-main h3 { font-size: 1.2rem; }
+      .hero-topline,
+      .console-titlebar { justify-content: flex-start; }
     }
   </style>
 </DashboardLayout>
