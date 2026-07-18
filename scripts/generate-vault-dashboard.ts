@@ -7,6 +7,7 @@ import { basename, dirname, extname, join, relative } from 'node:path';
 
 type ActivityType =
   | 'sias-lens'
+  | 'council-card'
   | 'ingestion'
   | 'journal'
   | 'dream'
@@ -71,6 +72,7 @@ const SUMMARY_VERSION = 2;
 
 const LIMITS: Record<ActivityType, number> = {
   'sias-lens': 30,
+  'council-card': 7,
   ingestion: 90,
   journal: 90,
   dream: 60,
@@ -87,6 +89,7 @@ const LIMITS: Record<ActivityType, number> = {
 
 const TYPE_LABELS: Record<ActivityType, string> = {
   'sias-lens': "Sia's Lens",
+  'council-card': 'Daily Council Card',
   ingestion: 'Vault Ingestion',
   journal: 'Journal',
   dream: 'Dream Journal',
@@ -117,6 +120,21 @@ type RegistryProject = {
   daemons?: Array<{ name?: string; label?: string; type?: string; schedule?: string }>;
   matrixRooms?: Array<{ name?: string; roomId?: string; purpose?: string }>;
   dashboard?: { includeRepoActivity?: boolean; activityLimit?: number };
+};
+
+type CouncilCard = {
+  version?: number;
+  generatedAt?: string;
+  date?: string;
+  todaySignal?: string;
+  siaSays?: string;
+  orenAsks?: string;
+  watashiNotices?: string;
+  oneMove?: string;
+  doNotDo?: string;
+  telosAlignment?: string;
+  openLoopFocus?: string[];
+  evidence?: Array<{ source?: string; path?: string; quote?: string }>;
 };
 
 function slugify(input: string): string {
@@ -595,6 +613,53 @@ async function collectFiles(type: ActivityType, root: string, subtitle?: string)
   return newest(items).slice(0, LIMITS[type]);
 }
 
+function councilCardMarkdown(card: CouncilCard): string {
+  const evidence = (card.evidence ?? [])
+    .map((item) => `- **${item.source ?? 'source'}:** ${item.quote ?? 'No quote.'}${item.path ? ` (${item.path})` : ''}`)
+    .join('\n');
+  const openLoops = (card.openLoopFocus ?? []).map((loop) => `- ${loop}`).join('\n');
+  return [
+    `# Daily Council Card — ${card.date ?? 'undated'}`,
+    '',
+    `**Today signal:** ${card.todaySignal ?? 'No signal generated.'}`,
+    `**Sia says:** ${card.siaSays ?? 'No Sia line generated.'}`,
+    `**Oren asks:** ${card.orenAsks ?? 'No Oren question generated.'}`,
+    `**Watashi notices:** ${card.watashiNotices ?? 'No Watashi observation generated.'}`,
+    `**One move:** ${card.oneMove ?? 'No one-move action generated.'}`,
+    `**Do not do:** ${card.doNotDo ?? 'No anti-action generated.'}`,
+    `**TELOS alignment:** ${card.telosAlignment ?? 'No alignment generated.'}`,
+    '',
+    '## Open Loop Focus',
+    openLoops || '- No focused open loops.',
+    '',
+    '## Evidence',
+    evidence || '- No evidence attached.',
+  ].join('\n');
+}
+
+async function collectCouncilCard(): Promise<ActivityItem[]> {
+  const fullPath = join(VAULT_DIR, '_System/Daemons/council-card/data/daily-council-card.json');
+  if (!existsSync(fullPath)) return [];
+  try {
+    const card = JSON.parse(await readFile(fullPath, 'utf8')) as CouncilCard;
+    const timestamp = validIsoTimestamp(card.generatedAt) ?? dateOnlyTimestamp(card.date) ?? new Date().toISOString();
+    return [
+      makeItem({
+        type: 'council-card',
+        title: `Daily Council Card — ${card.date ?? timestamp.slice(0, 10)}`,
+        subtitle: card.oneMove ? `One move: ${truncate(card.oneMove, 120)}` : 'Daily synthesis from Sia, Oren, Watashi, TELOS, and open loops',
+        timestamp,
+        path: relative(VAULT_DIR, fullPath),
+        markdown: councilCardMarkdown(card),
+        tags: ['daily-council-card', 'council-card', 'open-loops', 'telos'],
+        idSeed: `daily-council-card-${card.date ?? timestamp}`,
+      }),
+    ];
+  } catch {
+    return [];
+  }
+}
+
 async function messageFileItem(fullPath: string): Promise<ActivityItem> {
   const markdown = await safeRead(fullPath);
   const relPath = relative(VAULT_DIR, fullPath);
@@ -940,8 +1005,9 @@ async function main() {
   if (!existsSync(VAULT_DIR)) {
     throw new Error(`Vault directory does not exist: ${VAULT_DIR}`);
   }
-  const [lens, journals, dreams, messages, projects, knowledge, logItems, oren, watashi, daemonStatus, registryInventory, registryHealth, repoActivity] = await Promise.all([
+  const [lens, councilCard, journals, dreams, messages, projects, knowledge, logItems, oren, watashi, daemonStatus, registryInventory, registryHealth, repoActivity] = await Promise.all([
     collectFiles('sias-lens', join(VAULT_DIR, '_System/Daemons/sias-lens/reports'), "Sia's recurring synthesis report"),
+    collectCouncilCard(),
     collectFiles('journal', join(VAULT_DIR, 'Sources/Journal'), 'Promoted journal source'),
     collectFiles('dream', join(VAULT_DIR, 'Sources/DreamJournal'), 'Dream journal source'),
     collectMessages(),
@@ -956,7 +1022,7 @@ async function main() {
     collectRegistryRepoActivity(),
   ]);
 
-  const items = newest([...lens, ...journals, ...dreams, ...messages, ...projects, ...knowledge, ...logItems, ...oren, ...watashi, ...daemonStatus, ...registryInventory, ...registryHealth, ...repoActivity]);
+  const items = newest([...lens, ...councilCard, ...journals, ...dreams, ...messages, ...projects, ...knowledge, ...logItems, ...oren, ...watashi, ...daemonStatus, ...registryInventory, ...registryHealth, ...repoActivity]);
   const counts = items.reduce<Record<string, number>>((acc, item) => {
     acc[item.type] = (acc[item.type] ?? 0) + 1;
     return acc;

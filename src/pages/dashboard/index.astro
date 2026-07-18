@@ -5,6 +5,7 @@ import dashboardData from '../../data/vault-dashboard.json';
 
 type ActivityType =
   | 'sias-lens'
+  | 'council-card'
   | 'ingestion'
   | 'journal'
   | 'dream'
@@ -48,6 +49,7 @@ const generatedAt = new Date(dashboardData.generatedAt);
 const recentItems = items.slice(0, 18);
 const lanes: Array<{ type: ActivityType; label: string; glyph: string; hint: string }> = [
   { type: 'sias-lens', label: "Sia's Lens", glyph: '◇', hint: 'Oracle updates' },
+  { type: 'council-card', label: 'Council Card', glyph: '✧', hint: 'Daily one move' },
   { type: 'ingestion', label: 'Ingestions', glyph: '▣', hint: 'New vault loot' },
   { type: 'journal', label: 'Journal', glyph: '✎', hint: 'Captain logs' },
   { type: 'dream', label: 'Dream Realm', glyph: '☾', hint: 'Night signals' },
@@ -64,6 +66,7 @@ const lanes: Array<{ type: ActivityType; label: string; glyph: string; hint: str
 
 const counts = lanes.map((lane) => ({ ...lane, count: items.filter((item) => item.type === lane.type).length }));
 const latestLens = items.find((item) => item.type === 'sias-lens');
+const latestCouncilCard = items.find((item) => item.type === 'council-card');
 const conversations = items.filter((item) => item.type === 'conversation').slice(0, 4);
 const messages = items.filter((item) => item.type === 'message').slice(0, 5);
 const projects = items.filter((item) => item.type === 'project').slice(0, 5);
@@ -138,7 +141,7 @@ function typeLabel(type: ActivityType) {
           <p class="eyebrow">Vault command center</p>
           <h1 id="dashboard-title">Vault Quest Log</h1>
           <p class="hero-copy">
-            Recent activity, message-sync drops, companion conversations, dream realm signals, daemon party frames, registry projects, services, and Sia's oracle updates in one private retro console.
+            Recent activity, daily council cards, message-sync drops, companion conversations, dream realm signals, daemon party frames, registry projects, services, and Sia's oracle updates in one private retro console.
           </p>
         </div>
         <div class="save-stats" aria-label="Vault stats">
@@ -162,12 +165,12 @@ function typeLabel(type: ActivityType) {
           type="search"
           autocomplete="off"
           spellcheck="false"
-          placeholder='type:message whatsapp after:2026-06 or watashi attraction'
+          placeholder='type:council-card or type:message whatsapp after:2026-06'
         />
         <button id="clear-search" type="button">CLR</button>
       </div>
       <p class="search-help">
-        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:message</code>, <code>type:registry-project</code>, <code>type:registry-service</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
+        Shortcuts: <kbd>/</kbd> focus, <kbd>Tab</kbd> complete, <kbd>Esc</kbd> clear. Filters: <code>type:council-card</code>, <code>type:message</code>, <code>type:registry-project</code>, <code>type:registry-service</code>, <code>dossier:people</code>, <code>person:oren</code>, <code>after:2026-06-01</code>.
       </p>
       <div id="search-results" class="search-results" aria-live="polite"></div>
     </section>
@@ -223,6 +226,17 @@ function typeLabel(type: ActivityType) {
               <span>{latestLens.excerpt}</span>
             </a>
           ) : <p>No lens report indexed.</p>}
+        </section>
+
+        <section class="side-panel council-panel">
+          <button class="panel-title panel-title-button" type="button" data-panel-query="type:council-card" aria-pressed="false">Daily Council</button>
+          {latestCouncilCard ? (
+            <a href={latestCouncilCard.sourceUrl}>
+              <time datetime={latestCouncilCard.timestamp}>{formatDate(latestCouncilCard.timestamp)}</time>
+              <strong>{latestCouncilCard.title}</strong>
+              <span>{latestCouncilCard.subtitle}</span>
+            </a>
+          ) : <p>No council card generated.</p>}
         </section>
 
         <section class="side-panel">
@@ -308,6 +322,7 @@ function typeLabel(type: ActivityType) {
 
     const labels = {
       'sias-lens': "Sia's Lens",
+      'council-card': 'Council Card',
       ingestion: 'Ingestion',
       journal: 'Journal',
       dream: 'Dream',
@@ -341,7 +356,7 @@ function typeLabel(type: ActivityType) {
 
     function matchesFilters(item, filters) {
       if (filters.type) {
-        const aliases = { lens: 'sias-lens', dreams: 'dream', messages: 'message', ingestions: 'ingestion', daemon: 'daemon-status', registry: 'registry-project', service: 'registry-service', services: 'registry-service', repo: 'repo-activity' };
+        const aliases = { lens: 'sias-lens', council: 'council-card', card: 'council-card', dreams: 'dream', messages: 'message', ingestions: 'ingestion', daemon: 'daemon-status', registry: 'registry-project', service: 'registry-service', services: 'registry-service', repo: 'repo-activity' };
         const wanted = aliases[filters.type] || filters.type;
         if (!item.type.includes(wanted)) return false;
       }
@@ -845,6 +860,7 @@ function typeLabel(type: ActivityType) {
 
     .type-dream .card-rarity { background: var(--purple); color: var(--ink); }
     .type-sias-lens .card-rarity { background: var(--gold); }
+    .type-council-card .card-rarity { background: linear-gradient(180deg, var(--gold), var(--primary)); color: #080605; }
     .type-conversation .card-rarity { background: var(--green); }
     .type-daemon-status .card-rarity { background: #c46874; color: var(--ink); }
     .type-registry-project .card-rarity { background: #8d67ff; color: var(--ink); }
@@ -895,9 +911,14 @@ function typeLabel(type: ActivityType) {
     }
     .panel-title-button[data-active='true']::before { content: '▶ '; }
     .side-panel a { color: inherit; text-decoration: none; }
-    .oracle a { display: grid; gap: 0.35rem; }
-    .oracle time { color: var(--gold); font-size: 0.75rem; }
-    .oracle span { color: var(--muted); font-size: 0.9rem; }
+    .oracle a,
+    .council-panel a { display: grid; gap: 0.35rem; }
+    .oracle time,
+    .council-panel time { color: var(--gold); font-size: 0.75rem; }
+    .oracle span,
+    .council-panel span { color: var(--muted); font-size: 0.9rem; }
+    .council-panel { border-color: rgba(214, 168, 95, 0.58); }
+    .council-panel strong { color: var(--ink); }
 
     .mini-row,
     .daemon-row {

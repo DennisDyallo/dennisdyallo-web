@@ -10,6 +10,14 @@ The dashboard is static Astro output generated from the local Obsidian vault. Ge
 ~/Documents/Sunthings_AppStorage_EU_e2e
 ```
 
+The generator includes the vault-owned Daily Council Card at:
+
+```text
+~/Documents/Sunthings_AppStorage_EU_e2e/_System/Daemons/council-card/data/daily-council-card.json
+```
+
+When present, it appears as a first-class `type:council-card` dashboard item, lane card, side-panel entry, search filter, and inline item page. The website does not reimplement Council Card logic; it only renders the generated JSON artifact.
+
 ## Commands
 
 Generate the private activity index only:
@@ -155,10 +163,11 @@ launchctl load ~/Library/LaunchAgents/se.dyallo.vault-dashboard.plist
 
 This catches the main static-site leak class: private dashboard payload accidentally landing in public routes or shared `/_astro/` chunks.
 
-Generated private data file:
+Generated private data files:
 
 ```text
 src/data/vault-dashboard.json
+src/data/vault-dashboard-summaries/*.json
 ```
 
-This file is intentionally ignored by git.
+These files are intentionally ignored by git.
