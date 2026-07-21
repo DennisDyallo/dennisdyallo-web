@@ -55,13 +55,20 @@ function outsideDashboard(file: string): boolean {
   return !rel.startsWith(`dashboard${sep}`) && rel !== 'dashboard.html';
 }
 
+// Slice by Unicode code point, not UTF-16 code unit, so we never split a
+// surrogate pair (e.g. an emoji) and hand a lone surrogate to downstream
+// string ops like encodeURIComponent, which throws on malformed UTF-16.
+function safeSlice(str: string, maxCodePoints: number): string {
+  return Array.from(str).slice(0, maxCodePoints).join('');
+}
+
 function tokensFor(data: DashboardData): string[] {
   const tokens = new Set<string>();
   for (const item of data.items) {
     for (const value of [item.id, item.title, item.subtitle, item.excerpt, item.path, item.content ?? '', item.html ?? '']) {
       const clean = value.replace(/\s+/g, ' ').trim();
       if (clean.length >= 24) {
-        addTokenVariants(tokens, clean.slice(0, 90));
+        addTokenVariants(tokens, safeSlice(clean, 90));
       }
     }
   }
@@ -73,7 +80,14 @@ function tokensFor(data: DashboardData): string[] {
 function addTokenVariants(tokens: Set<string>, token: string): void {
   tokens.add(token);
   tokens.add(token.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-  tokens.add(encodeURIComponent(token));
+  // Defensive: even with safeSlice, guard against any other malformed input
+  // (e.g. lone surrogates already present in source content) so a single
+  // bad token can never crash the whole build.
+  try {
+    tokens.add(encodeURIComponent(token));
+  } catch (err) {
+    console.warn(`verify-dashboard-privacy: skipping encodeURIComponent for malformed token: ${JSON.stringify(token)}`);
+  }
   tokens.add(token.replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026'));
   tokens.add(JSON.stringify(token).slice(1, -1));
 }
